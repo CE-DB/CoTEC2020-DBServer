@@ -565,23 +565,6 @@ namespace CoTEC_Server.Logic.GraphQL
             return null;
         }
 
-
-        /// <summary>
-        /// Delete a Sanitary measure event (only marks it like active, they really cannot being deleted.)
-        /// </summary>
-        /// <param name="Name">Old Name of Sanitary measure.</param>
-        /// <param name="StartDate">The old date of activation of the measure. Format is YYYY-MM-DD.</param>
-        /// <param name="Country">Old Country name that activate the measure.</param>
-        [GraphQLNonNullType]
-        public async Task<SanitaryMeasure> deleteSanitaryMeasureEvent([Service] SQLServerContext dbCont,
-            [GraphQLNonNullType] string Name,
-            [GraphQLNonNullType] string Country,
-            [GraphQLNonNullType] DateTime StartDate)
-        {
-
-            return null;
-        }
-
         /// <summary>
         /// Add new Contention measure relation to country.
         /// </summary>
@@ -624,21 +607,5 @@ namespace CoTEC_Server.Logic.GraphQL
             return null;
         }
 
-
-        /// <summary>
-        /// Delete a Contention measure event (only marks it like active, they really cannot being deleted.)
-        /// </summary>
-        /// <param name="Name">Old Name of Contention measure.</param>
-        /// <param name="StartDate">The old date of activation of the measure. Format is YYYY-MM-DD.</param>
-        /// <param name="Country">Old Country name that activate the measure.</param>
-        [GraphQLNonNullType]
-        public async Task<ContentionMeasure> deleteContentionMeasureEvent([Service] SQLServerContext dbCont,
-            [GraphQLNonNullType] string Name,
-            [GraphQLNonNullType] string Country,
-            [GraphQLNonNullType] DateTime StartDate)
-        {
-
-            return null;
-        }
     }
 }
