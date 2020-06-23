@@ -1,7 +1,9 @@
 ﻿using CoTEC_Server.Database;
 using HotChocolate;
+using HotChocolate.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Reflection.Metadata;
 using System.Threading.Tasks;
 
 namespace CoTEC_Server.Logic.GraphQL
@@ -57,6 +59,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// Get regions available in database.
         /// </summary>
         /// <param name="name">Filter results by region name.</param>
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<List<Types.Region>> regions([Service] SQLServerContext dbCont, string name)
         {
             if (name == null)
@@ -71,6 +74,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// Get pathologies available in database.
         /// </summary>
         /// <param name="name">Filter results by pathology name.</param>
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<List<Types.Pathology>> pathologies([Service] SQLServerContext dbCont, string name)
         {
             if (name == null)
@@ -85,6 +89,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// Get patient states available in database.
         /// </summary>
         /// <param name="name">Filter results by patient state name.</param>
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<List<Types.PatientState>> patientStates([Service] SQLServerContext dbCont, string name)
         {
             if (name == null)
@@ -99,6 +104,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// Get health centers available in database.
         /// </summary>
         /// <param name="name">Filter results by hospital name.</param>
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<List<Types.Healthcenter>> Healthcenters([Service] SQLServerContext dbCont, string name)
         {
             if (name == null)
@@ -113,6 +119,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// Get sanitary measures available in database.
         /// </summary>
         /// <param name="name">Filter results by measure name.</param>
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<List<Types.SanitaryMeasure>> SanitaryMeasures([Service] SQLServerContext dbCont, string name)
         {
             if (name == null)
@@ -127,6 +134,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// Get contaiment measures available in database.
         /// </summary>
         /// <param name="name">Filter results by measure name.</param>
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<List<Types.ContentionMeasure>> ContentionMeasures([Service] SQLServerContext dbCont, string name)
         {
             if (name == null)
@@ -141,6 +149,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// Get medications available in database.
         /// </summary>
         /// <param name="name">Filter results by medication name.</param>
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<List<Types.Medication>> medications([Service] SQLServerContext dbCont, string name)
         {
             if (name == null)
@@ -155,6 +164,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// Get patients available in database.
         /// </summary>
         /// <param name="id">Filter results by identification number of patient.</param>
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<List<Types.Patient>> patients([Service] SQLServerContext dbCont, string? id)
         {
             if (id == null)
@@ -169,14 +179,10 @@ namespace CoTEC_Server.Logic.GraphQL
         /// Get contacts available in database.
         /// </summary>
         /// <param name="id">Filter results by identification number of contact.</param>
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<List<Types.Patient>> contacts([Service] SQLServerContext dbCont, int? id)
         {
-            if (id == null)
-            {
-                return await dbCont.Patients.FromSqlRaw("").ToListAsync();
-            }
-
-            return await dbCont.Patients.FromSqlRaw("").ToListAsync();
+            return null;
         }
 
         /// <summary>
@@ -185,6 +191,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <returns>
         /// Endpoint string for download PDF file.
         /// </returns>
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<string> patientsReport([Service] SQLServerContext dbCont)
         {
             return null;
@@ -196,6 +203,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <returns>
         /// Endpoint string for download PDF file.
         /// </returns>
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<string> newCasesReport([Service] SQLServerContext dbCont)
         {
             return null;

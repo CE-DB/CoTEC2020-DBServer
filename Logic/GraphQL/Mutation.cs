@@ -1,6 +1,7 @@
 ﻿using CoTEC_Server.Database;
 using CoTEC_Server.Logic.GraphQL.Types;
 using HotChocolate;
+using HotChocolate.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="countryName">Country name where region belongs to.</param>
         /// <param name="name">Name of the country where region belongs to</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Region> addRegion([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name, 
             [GraphQLNonNullType] string countryName)
@@ -41,6 +43,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="newCountry">New name of country, send nothing for keeping old value.</param>
         /// <param name="oldCountry">Old name of country.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Region> updateRegion([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldName,
             [GraphQLNonNullType] string oldCountry,
@@ -56,6 +59,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// </summary>
         /// <param name="Name">Name of the region to delete.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Region> deleteRegion([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name)
         {
@@ -80,6 +84,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="state">State of patient (dead, infected, recovered...)</param>
         /// <param name="latestContacts">List of identification numbers of visitors of the patient.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<Patient> addPatient([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string firstName,
             [GraphQLNonNullType] string lastName,
@@ -116,6 +121,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="state">State of patient (dead, infected, recovered...)</param>
         /// <param name="latestContacts">List of identification numbers of visitors of the patient.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<Patient> updatePatient([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldIdentification,
             string firstName,
@@ -140,6 +146,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// </summary>
         /// <param name="identification">Identification code of patient to delete.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<Patient> deletePatient([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string identification)
         {
@@ -162,6 +169,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="country">Country where contact lives.</param>
         /// <param name="pathologies">List of pathology names the contact has.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<Contact> addContact([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string firstName,
             [GraphQLNonNullType] string lastName,
@@ -194,6 +202,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="address">Exact contact address.</param>
         /// <param name="email">Contact email address.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<Contact> updateContact([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldIdentification,
             string firstName,
@@ -216,6 +225,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// </summary>
         /// <param name="identification">Identification code of contact to delete.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.HealthCenterPolicyName)]
         public async Task<Contact> deleteContact([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string identification)
         {
@@ -231,6 +241,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="symptoms">List of symptoms name.</param>
         /// <param name="treatment">Treatment description.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Pathology> addPathology([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name,
             [GraphQLNonNullType] string description,
@@ -251,6 +262,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="symptoms">List of symptoms name.</param>
         /// <param name="treatment">Treatment description.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Pathology> updatePathology([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldName,
             string newName,
@@ -268,6 +280,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// </summary>
         /// <param name="name">Name of pathology to delete.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Pathology> deletePathology([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name)
         {
@@ -281,6 +294,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// </summary>
         /// <param name="name">Name of state.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<PatientState> addPatientState([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name)
         {
@@ -294,6 +308,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="oldName">Name of state to update.</param>
         /// <param name="newName">New name of state.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<PatientState> updatePatientState([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldName,
             string newName)
@@ -307,6 +322,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// </summary>
         /// <param name="name">Name of patient state to delete.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<PatientState> deletePatientState([Service] SQLServerContext dbCont,
            [GraphQLNonNullType] string name)
         {
@@ -324,6 +340,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="region">Region name of location</param>
         /// <param name="country">Country name of location</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Healthcenter> addHealthCenter([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name,
             [GraphQLNonNullType] int capacity,
@@ -350,6 +367,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="oldName">Name of hospital to update</param>
         /// <param name="oldRegion">Region of hospital to update</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Healthcenter> updateHealthCenter([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldName,
             [GraphQLNonNullType] string oldRegion,
@@ -372,6 +390,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="country">Name of country of hospital to delete.</param>
         /// <param name="region">Name of region of hospital to delete</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Healthcenter> deleteHealthCenter([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name,
             [GraphQLNonNullType] string country,
@@ -391,6 +410,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="endDate">The date of desactivation of the measure. Format is YYYY-MM-DD</param>
         /// <param name="country">Country name that activate the measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<ContentionMeasure> addContentionMeasure([Service] SQLServerContext dbCont,
            [GraphQLNonNullType] string name,
            [GraphQLNonNullType] string description)
@@ -409,6 +429,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="endDate">The date of desactivation of the measure. Format is YYYY-MM-DD</param>
         /// <param name="country">Country name that activate the measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<ContentionMeasure> updateContentionMeasure([Service] SQLServerContext dbCont,
            [GraphQLNonNullType] string oldName,
             string name,
@@ -423,6 +444,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// </summary>
         /// <param name="name">Name of contention measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<ContentionMeasure> deleteContentionMeasure([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name)
         {
@@ -440,6 +462,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="endDate">The date of desactivation of the measure. Format is YYYY-MM-DD</param>
         /// <param name="country">Country name that activate the measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<SanitaryMeasure> addSanitaryMeasure([Service] SQLServerContext dbCont,
            [GraphQLNonNullType] string name,
             [GraphQLNonNullType] string description)
@@ -458,6 +481,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="endDate">The date of desactivation of the measure. Format is YYYY-MM-DD</param>
         /// <param name="country">Country name that activate the measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<SanitaryMeasure> updateSanitaryMeasure([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldName,
             string name,
@@ -473,6 +497,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// </summary>
         /// <param name="name">Name of Sanitary measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<SanitaryMeasure> deleteSanitaryMeasure([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name)
         {
@@ -486,6 +511,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="name">Name of medication.</param>
         /// <param name="pharmaceutical">Pharmaceutical house that made the medication.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Medication> addMedication([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name,
             [GraphQLNonNullType] string pharmaceutical)
@@ -501,6 +527,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="pharmaceutical">Pharmaceutical house that made the medication.</param>
         /// <param name="oldName">Name of the medication to update.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<SanitaryMeasure> updateMedication([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldName,
             string name,
@@ -516,6 +543,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// </summary>
         /// <param name="name">Name of medication to delete.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<Medication> deleteMedication([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name)
         {
@@ -531,6 +559,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="endDate">The date of desactivation of the measure. Format is YYYY-MM-DD</param>
         /// <param name="country">Country name that activate the measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<SanitaryMeasure> addSanitaryMeasureEvent([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name,
             [GraphQLNonNullType] string country,
@@ -552,6 +581,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="oldStartDate">The old date of activation of the measure. Format is YYYY-MM-DD.</param>
         /// <param name="oldCountry">Old Country name that activate the measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<SanitaryMeasure> updateSanitaryMeasureEvent([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldName,
             [GraphQLNonNullType] string oldCountry,
@@ -573,6 +603,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="endDate">The date of desactivation of the measure. Format is YYYY-MM-DD</param>
         /// <param name="country">Country name that activate the measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<ContentionMeasure> addContentionMeasureEvent([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string name,
             [GraphQLNonNullType] string country,
@@ -594,6 +625,7 @@ namespace CoTEC_Server.Logic.GraphQL
         /// <param name="oldStartDate">The old date of activation of the measure. Format is YYYY-MM-DD.</param>
         /// <param name="oldCountry">Old Country name that activate the measure.</param>
         [GraphQLNonNullType]
+        [Authorize(Policy = Constants.AdminPolicyName)]
         public async Task<ContentionMeasure> updateContentionMeasureEvent([Service] SQLServerContext dbCont,
             [GraphQLNonNullType] string oldName,
             [GraphQLNonNullType] string oldCountry,
