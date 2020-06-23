@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using CoTEC_Server.Logic;
+using CoTEC_Server.Logic.Auth;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -13,18 +14,26 @@ namespace CoTEC_Server.Controllers
     public class AuthController : Controller
     {
 
-        [HttpGet]
-        public IActionResult Authenticate(string id_code, string password)
+        [HttpPost]
+        public IActionResult Authenticate([FromBody] UserCred user)
         {
 
-            if (id_code == null || password == null)
+            if (user == null)
             {
-                return BadRequest("Identification code or password can't be empty");
+                return BadRequest("Identification credentials must be provided");
+
+            } else if (user.id == null || user.id.Trim().Equals(""))
+            {
+                return BadRequest("Identification code must be provided");
+
+            } else if (user.pass == null || user.pass.Trim().Equals(""))
+            {
+                return BadRequest("Password must be provided");
             }
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, id_code.Trim()),
+                new Claim(JwtRegisteredClaimNames.Sub, user.id.Trim()),
                 new Claim(JwtRegisteredClaimNames.Iss, Constants.Issuer),
                 //TODO: Insert correct role
                 new Claim(Constants.RoleClaim, "Role")
