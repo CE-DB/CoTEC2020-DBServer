@@ -5,7 +5,7 @@ namespace CoTEC_Server.Database
 {
     public class SQLServerContext : DbContext
     {
-        public static string DbConnectionString = "Server=localhost;Database=CoTEC_2020;User Id=sa;Password=sqlserver@adp2599";
+        public static string DbConnectionString = "Server=localhost;Database=CoTEC_DB;User Id=CoTEC_ServerApp_Login;Password=2Lfy.KMNwe{{>&@AZ&A3";
 
         public SQLServerContext(DbContextOptions<SQLServerContext> options) : base(options)
         { }
