@@ -31,9 +31,10 @@ CREATE TABLE admin.Continent(
 GO
 
 CREATE TABLE admin.Country(
-	Name VARCHAR(100) PRIMARY KEY,
-	Continent VARCHAR(100) NOT NULL,
+	Name VARCHAR(100),
+	Continent VARCHAR(100),
 
+	PRIMARY KEY(Name),
 	FOREIGN KEY(Continent) REFERENCES admin.Continent(Name)
 );
 GO
@@ -42,10 +43,12 @@ CREATE TABLE admin.Region(
 	Name VARCHAR(100),
 	Country VARCHAR(100),
 
-	PRIMARY KEY(name, Country),
+	PRIMARY KEY(Name, Country),
 	FOREIGN KEY(Country) REFERENCES admin.Country(Name)
 );
 GO
+
+
 
 CREATE TABLE user_public.Population(
 	Date Date,
@@ -237,9 +240,6 @@ CREATE TABLE healthcare.Patient_Contact(
 	FOREIGN KEY(Contact_Id) REFERENCES healthcare.Contact(Id_Number),
 	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(Id_Number)
 );
-GO
-
-INSERT INTO admin.Patient_State VALUES ('Active'),('Infected'),('Recovered'),('Deceased');
 GO
 
 CREATE TRIGGER admin.Patient_States_Deletion_Checker
@@ -610,4 +610,7 @@ IF @Email IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
 				@Age);
 		END
 END;
+GO
+
+INSERT INTO admin.Patient_State VALUES ('Active'),('Infected'),('Recovered'),('Deceased');
 GO
