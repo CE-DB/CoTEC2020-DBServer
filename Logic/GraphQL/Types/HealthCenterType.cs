@@ -1,24 +1,38 @@
-﻿using HotChocolate.Types;
+﻿using CoTEC_Server.DBModels;
+using HotChocolate.Types;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace CoTEC_Server.Logic.GraphQL.Types
 {
-    public class HealthCenterType : ObjectType<Healthcenter>
+    public class HealthCenterType : ObjectType<Hospital>
     {
 
-        protected override void Configure(IObjectTypeDescriptor<Healthcenter> descriptor)
+        protected override void Configure(IObjectTypeDescriptor<Hospital> descriptor)
         {
             base.Configure(descriptor);
 
-            descriptor.Field(t => t.name).Type<NonNullType<StringType>>();
+            descriptor.Name("HealthCenter");
 
-            descriptor.Field(t => t.capacity).Type<NonNullType<IntType>>();
+            descriptor.BindFieldsExplicitly();
 
-            descriptor.Field(t => t.totalICUbeds).Type<NonNullType<IntType>>();
+            descriptor.Field(f => f.Name).Type<NonNullType<StringType>>();
 
-            descriptor.Field(t => t.directorcontact).Type<NonNullType<ContactType>>();
+            descriptor.Field(f => f.Capacity).Type<NonNullType<IntType>>();
 
-            descriptor.Field(t => t.ubication).Type<NonNullType<RegionType>>();
+            descriptor.Field(f => f.IcuCapacity).Type<NonNullType<IntType>>()
+                .Name("totalICUBeds");
+
+            descriptor.Field(f => f.ManagerNavigation).Type<NonNullType<ContactType>>()
+                .Name("directorContact");
+
+            descriptor.Field(f => f.RegionNavigation).Type<NonNullType<RegionType>>()
+                .Name("ubication");
         }
+
+
 
     }
 }

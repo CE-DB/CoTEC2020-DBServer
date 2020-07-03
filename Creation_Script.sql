@@ -3,6 +3,7 @@ USE master;
 CREATE DATABASE CoTEC_DB;
 GO
 
+
 USE CoTEC_DB;
 CREATE LOGIN CoTEC_ServerApp_Login WITH PASSWORD = '2Lfy.KMNwe{{>&@AZ&A3';
 GO
@@ -30,7 +31,7 @@ CREATE TABLE admin.Continent(
 );
 GO
 
-CREATE TABLE admin.Country(
+CREATE TABLE admin.country(
 	Name VARCHAR(100),
 	Continent VARCHAR(100),
 
@@ -39,87 +40,87 @@ CREATE TABLE admin.Country(
 );
 GO
 
-CREATE TABLE admin.Region(
+CREATE TABLE admin.region(
 	Name VARCHAR(100),
-	Country VARCHAR(100),
+	country VARCHAR(100),
 
-	PRIMARY KEY(Name, Country),
-	FOREIGN KEY(Country) REFERENCES admin.Country(Name)
+	PRIMARY KEY(Name, country),
+	FOREIGN KEY(country) REFERENCES admin.country(Name)
 );
 GO
 
 
 
 CREATE TABLE user_public.Population(
-	Date Date,
-	Country_Name VARCHAR(100),
+	day Date,
+	country_Name VARCHAR(100),
 	Infected int NOT NULL CHECK (Infected >= 0),
 	Cured int NOT NULL CHECK (Cured >= 0),
 	Dead int NOT NULL CHECK (Dead >= 0),
 	Active AS Infected - Cured - Dead PERSISTED NOT NULL CHECK (Active >= 0),
 
-	PRIMARY KEY(Date, Country_Name),
-	FOREIGN KEY(Country_Name) REFERENCES admin.Country(Name)
+	PRIMARY KEY(day, country_Name),
+	FOREIGN KEY(country_Name) REFERENCES admin.country(Name)
 );
 GO
 
 CREATE TABLE admin.Contention_Measure(
 	Name VARCHAR(80),
-	Description VARCHAR(5000) NOT NULL,
+	Description VARCHAR(5000) DEFAULT 'No Description',
 
 	PRIMARY KEY(Name)
 );
 GO
 
 CREATE TABLE user_public.Contention_Measures_Changes(
-	Country_Name VARCHAR(100),
+	country_Name VARCHAR(100),
 	Measure_Name VARCHAR(80),
 	Start_Date Date,
-	End_Date Date NOT NULL,
+	End_Date Date,
 
-	PRIMARY KEY(Measure_Name, Country_Name, Start_Date),
-	FOREIGN KEY(Country_Name) REFERENCES admin.Country(Name),
+	PRIMARY KEY(Measure_Name, country_Name, Start_Date),
+	FOREIGN KEY(country_Name) REFERENCES admin.country(Name),
 	FOREIGN KEY(Measure_Name) REFERENCES admin.Contention_Measure(Name)
 );
 GO
 
 CREATE TABLE admin.Sanitary_Measure(
 	Name VARCHAR(100),
-	Description VARCHAR(5000) NOT NULL,
+	Description VARCHAR(5000) DEFAULT 'No Description',
 
 	PRIMARY KEY(Name)
 );
 GO
 
 CREATE TABLE user_public.Sanitary_Measures_Changes(
-	Country_Name VARCHAR(100),
+	country_Name VARCHAR(100),
 	Measure_Name VARCHAR(100),
 	Start_Date Date,
-	End_Date Date NOT NULL,
+	End_Date Date,
 
-	PRIMARY KEY(Measure_Name, Country_Name, Start_Date),
-	FOREIGN KEY(Country_Name) REFERENCES admin.Country(Name),
+	PRIMARY KEY(Measure_Name, country_Name, Start_Date),
+	FOREIGN KEY(country_Name) REFERENCES admin.country(Name),
 	FOREIGN KEY(Measure_Name) REFERENCES admin.Sanitary_Measure(Name)
 );
 GO
 
 CREATE TABLE admin.Medication(
 	Medicine VARCHAR(80),
-	Pharmacist VARCHAR(80) NOT NULL,
+	Pharmacist VARCHAR(80) DEFAULT 'Unknown',
 	PRIMARY KEY(Medicine)
 );
 GO
 
 CREATE TABLE admin.Patient_State(
-	Name VARCHAR(50),
+	name VARCHAR(50),
 	PRIMARY KEY(Name)
 );
 GO
 
 CREATE TABLE admin.Staff(
 	Id_Code NVARCHAR(50) PRIMARY KEY,
-	First_Name VARCHAR(1000) NOT NULL,
-	Last_Name VARCHAR(1000) NOT NULL,
+	firstName VARCHAR(1000) NOT NULL,
+	lastName VARCHAR(1000) NOT NULL,
 	Password NVARCHAR(2000) NOT NULL,
 	Role VARCHAR(20) NOT NULL
 );
@@ -127,68 +128,68 @@ GO
 
 CREATE TABLE admin.Pathology(
 	Name VARCHAR(150) PRIMARY KEY,
-	Description VARCHAR(5000) NOT NULL DEFAULT 'No Description',
-	Treatment VARCHAR(5000) NOT NULL DEFAULT 'No Treatment',
+	Description VARCHAR(5000) DEFAULT 'No Description',
+	Treatment VARCHAR(5000) DEFAULT 'No Treatment',
 );
 GO
 
 CREATE TABLE healthcare.Contact(
-	Id_Number NVARCHAR(50),
-	First_Name VARCHAR(1000) NOT NULL,
-	Last_Name VARCHAR(1000) NOT NULL,
-	Region VARCHAR(100) NOT NULL,
-	Nationality VARCHAR(100) NOT NULL DEFAULT 'No nationality',
-	Country VARCHAR(100) NOT NULL,
-	Address VARCHAR(500) NOT NULL,
-	Email VARCHAR(200) NOT NULL,
-	Age tinyint NOT NULL CHECK (Age >= 0)
+	identification NVARCHAR(50),
+	firstName VARCHAR(1000) NOT NULL,
+	lastName VARCHAR(1000) NOT NULL,
+	region VARCHAR(100) NOT NULL,
+	nationality VARCHAR(100) DEFAULT 'No nationality',
+	country VARCHAR(100) NOT NULL,
+	address VARCHAR(500) NOT NULL,
+	email VARCHAR(200) NOT NULL,
+	age tinyint DEFAULT 0 CHECK (age >= 0),
 
-	PRIMARY KEY(Id_Number),
-	FOREIGN KEY(Region, Country) REFERENCES admin.Region(Name, Country)
+	PRIMARY KEY(identification),
+	FOREIGN KEY(region, country) REFERENCES admin.region(Name, country)
 );
 GO
 
 CREATE TABLE admin.Hospital(
 	Name VARCHAR(80),
-	Region VARCHAR(100),
-	Country VARCHAR(100),
+	region VARCHAR(100),
+	country VARCHAR(100),
 	Capacity smallint NOT NULL CHECK (Capacity >= 0),
 	ICU_Capacity smallint NOT NULL CHECK (ICU_Capacity >= 0),
 	Manager NVARCHAR(50) NOT NULL,
 
-	PRIMARY KEY(Name, Region, Country),
-	FOREIGN KEY(Region, Country) REFERENCES admin.Region(Name, Country),
-	FOREIGN KEY(Manager) REFERENCES healthcare.Contact(Id_Number)
+	PRIMARY KEY(Name, region, country),
+	FOREIGN KEY(region, country) REFERENCES admin.region(Name, country),
+	FOREIGN KEY(Manager) REFERENCES healthcare.Contact(identification)
 );
 GO
 
 CREATE TABLE healthcare.Patient(
-	Id_Number NVARCHAR(50),
-	First_Name VARCHAR(1000) NOT NULL,
-	Last_Name VARCHAR(1000) NOT NULL,
-	Region VARCHAR(100) NOT NULL,
-	Nationality VARCHAR(100) NOT NULL,
-	Country VARCHAR(100) NOT NULL,
-	Age tinyint NOT NULL CHECK (Age >= 0),
-	ICU bit NOT NULL DEFAULT 0,
-	Hospitalized bit NOT NULL  DEFAULT 0,
-	State VARCHAR(50) NOT NULL,
+	identification NVARCHAR(50),
+	firstName VARCHAR(1000) NOT NULL,
+	lastName VARCHAR(1000) NOT NULL,
+	region VARCHAR(100) NOT NULL,
+	nationality VARCHAR(100) NOT NULL,
+	country VARCHAR(100) NOT NULL,
+	age tinyint NOT NULL CHECK (age >= 0),
+	intensiveCareUnite bit NOT NULL DEFAULT 0,
+	hospitalized bit NOT NULL  DEFAULT 0,
+	state VARCHAR(50) NOT NULL,
 	Date_Entrance Date NOT NULL,
 
-	PRIMARY KEY(Id_Number),
-	FOREIGN KEY(Region, Country) REFERENCES admin.Region(Name, Country),
-	FOREIGN KEY(State) REFERENCES admin.Patient_State(Name)
+	PRIMARY KEY(identification),
+	FOREIGN KEY(region, country) REFERENCES admin.region(Name, country),
+	FOREIGN KEY(state) REFERENCES admin.Patient_State(Name)
 );
 GO
 
 CREATE TABLE admin.Hospital_Workers(
 	Id_Code NVARCHAR(50),
 	Name VARCHAR(80),
-	Region VARCHAR(100),
-	Country VARCHAR(100),
+	region VARCHAR(100),
+	country VARCHAR(100),
 
-	PRIMARY KEY(Id_Code, Name, Region, Country),
-	FOREIGN KEY(Name, Region, Country) REFERENCES admin.Hospital(Name, Region, Country),
+	PRIMARY KEY(Id_Code, Name, region, country),
+	FOREIGN KEY(Name, region, country) REFERENCES admin.Hospital(Name, region, country),
 	FOREIGN KEY(Id_Code) REFERENCES admin.Staff(Id_Code)
 );
 GO
@@ -198,7 +199,7 @@ CREATE TABLE healthcare.Patient_Medication(
 	Medication VARCHAR(80),
 
 	PRIMARY KEY(Patient_Id, Medication),
-	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(Id_Number),
+	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(identification),
 	FOREIGN KEY(Medication) REFERENCES admin.Medication(Medicine)
 );
 GO
@@ -208,7 +209,7 @@ CREATE TABLE healthcare.Patient_Pathology(
 	Patient_Id NVARCHAR(50),
 
 	PRIMARY KEY(Pathology_Name, Patient_Id),
-	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(Id_Number),
+	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(identification),
 	FOREIGN KEY(Pathology_Name) REFERENCES admin.Pathology(Name)
 );
 GO
@@ -227,7 +228,7 @@ CREATE TABLE healthcare.Contact_Pathology(
 	Contact_Id NVARCHAR(50),
 
 	PRIMARY KEY(Contact_Id, Pathology_name),
-	FOREIGN KEY(Contact_Id) REFERENCES healthcare.Contact(Id_Number),
+	FOREIGN KEY(Contact_Id) REFERENCES healthcare.Contact(identification),
 	FOREIGN KEY(Pathology_name) REFERENCES admin.Pathology(Name)
 );
 GO
@@ -235,10 +236,11 @@ GO
 CREATE TABLE healthcare.Patient_Contact(
 	Patient_Id NVARCHAR(50),
 	Contact_Id NVARCHAR(50),
+	last_visit Date NOT NULL DEFAULT CONVERT(Date, GETDATE()),
 
-	PRIMARY KEY(Contact_Id, Patient_Id),
-	FOREIGN KEY(Contact_Id) REFERENCES healthcare.Contact(Id_Number),
-	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(Id_Number)
+	PRIMARY KEY(Contact_Id, Patient_Id, last_visit),
+	FOREIGN KEY(Contact_Id) REFERENCES healthcare.Contact(identification),
+	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(identification)
 );
 GO
 
@@ -271,21 +273,21 @@ BEGIN
 DECLARE @New_Patients int = (SELECT COUNT(*) FROM inserted);
 DECLARE @Erased_Patients int = (SELECT COUNT(*) FROM deleted);
 
-DECLARE @State VARCHAR(80);
-DECLARE @Country VARCHAR(100);
+DECLARE @state VARCHAR(80);
+DECLARE @country VARCHAR(100);
 DECLARE @Date_Existence INT;
 
 IF (@New_Patients > 0)
 BEGIN
 
-	SET @State = (SELECT State FROM inserted);
+	SET @state = (SELECT state FROM inserted);
 
-	SET @Country = (SELECT Country FROM inserted);
+	SET @country = (SELECT country FROM inserted);
 
 	SET @Date_Existence = (SELECT COUNT(*)
 				FROM user_public.Population AS p, inserted
-				WHERE p.Date = inserted.Date_Entrance
-				AND p.Country_Name = @Country);
+				WHERE p.day = inserted.Date_Entrance
+				AND p.country_Name = @country);
 
 
 	IF (@Date_Existence > 0)
@@ -294,130 +296,138 @@ BEGIN
 
 			UPDATE user_public.Population
 			SET Infected = Infected + 1,
-				Cured = (CASE @State
+				Cured = (CASE @state
 							WHEN 'Recovered' THEN Cured + 1
 							ELSE Cured
 							END),
-				Dead = (CASE @State
+				Dead = (CASE @state
 							WHEN 'Deceased' THEN Dead + 1
 							ELSE Dead
 							END)
-			WHERE EXISTS(SELECT p.Date
+			WHERE EXISTS(SELECT p.day
 				FROM user_public.Population AS p, inserted
-				WHERE p.Date = inserted.Date_Entrance
-				AND p.Country_Name = @Country)
+				WHERE p.day = inserted.Date_Entrance
+				AND p.country_Name = @country)
 		END
 
 	ELSE
 		BEGIN
 			
-			INSERT INTO user_public.Population(Infected, Cured, Dead, Date, Country_Name)
+			INSERT INTO user_public.Population(Infected, Cured, Dead, day, country_Name)
 			VALUES(
 				1,
-				(CASE @State
+				(CASE @state
 							WHEN 'Recovered' THEN 1
 							ELSE 0 END),
-				(CASE @State
+				(CASE @state
 							WHEN 'Deceased' THEN 1
 							ELSE 0 END),
 				(SELECT Date_Entrance FROM inserted),
-				@Country)
+				@country)
 		END
 END
 
 IF (@Erased_Patients > 0)
 BEGIN
 
-	SET @State = (SELECT State FROM deleted);
+	SET @state = (SELECT state FROM deleted);
 
-	SET @Country = (SELECT Country FROM deleted);
+	SET @country = (SELECT country FROM deleted);
 
 	SET @Date_Existence = (SELECT COUNT(*)
 				FROM user_public.Population AS p, deleted
-				WHERE p.Date = deleted.Date_Entrance
-				AND p.Country_Name = @Country);
+				WHERE p.day = deleted.Date_Entrance
+				AND p.country_Name = @country);
 
 	IF (@Date_Existence > 0)
 		BEGIN
 			UPDATE user_public.Population
 			SET Infected = Infected - 1,
-				Cured = (CASE @State
+				Cured = (CASE @state
 							WHEN 'Recovered' THEN Cured - 1
 							ELSE Cured
 							END),
-				Dead = (CASE @State
+				Dead = (CASE @state
 							WHEN 'Deceased' THEN Dead - 1
 							ELSE Dead
 							END)
-			WHERE EXISTS(SELECT p.Date
+			WHERE EXISTS(SELECT p.day
 				FROM user_public.Population AS p, deleted
-				WHERE p.Date = deleted.Date_Entrance
-				AND p.Country_Name = @Country)
+				WHERE p.day = deleted.Date_Entrance
+				AND p.country_Name = @country)
+
+			DELETE
+			FROM user_public.Population
+			WHERE day = (SELECT Date_Entrance FROM deleted)
+			AND country_Name = @country
+			AND Infected = 0
+			AND Cured = 0
+			AND Dead = 0
 		END
 END
 END
 GO
 
-CREATE PROCEDURE healthcare.Patients_updater (@id_number NVARCHAR(50),
-													@First_Name VARCHAR(1000) = NULL,
-													@Last_Name VARCHAR(1000) = NULL,
-													@Region  VARCHAR(100) = NULL,
-													@Nationality VARCHAR(100) = NULL,
-													@Country VARCHAR(100) = NULL,
-													@Age TINYINT = NULL,
-													@ICU BIT = NULL,
-													@Hospitalized BIT = NULL,
-													@State VARCHAR(50) = NULL,
+CREATE PROCEDURE healthcare.Patients_updater (@identification NVARCHAR(50),
+													@firstName VARCHAR(1000) = NULL,
+													@lastName VARCHAR(1000) = NULL,
+													@region  VARCHAR(100) = NULL,
+													@nationality VARCHAR(100) = NULL,
+													@country VARCHAR(100) = NULL,
+													@age TINYINT = NULL,
+													@intensiveCareUnite BIT = NULL,
+													@hospitalized BIT = NULL,
+													@state VARCHAR(50) = NULL,
 													@Entrance_Date Date = NULL)
 AS
 
 BEGIN
 
-IF @id_number IS NULL RAISERROR (15600,-1,-1, 'mysp_Cases_Count_updater'); 
+IF @identification IS NULL RAISERROR (15600,-1,-1, 'mysp_Cases_Count_updater'); 
 
 DECLARE @Old_Date Date;
 DECLARE @Old_State VARCHAR(50);
-DECLARE @Old_Country VARCHAR(50);
+DECLARE @Old_country VARCHAR(50);
 
 
-SELECT @Old_Country = Country, @Old_Date = Date_Entrance, @Old_State = State
+SELECT @Old_country = country, @Old_Date = Date_Entrance, @Old_State = state
 FROM healthcare.Patient
-WHERE Id_Number = @id_number;
+WHERE identification = @identification;
 
 BEGIN TRY
 
 	UPDATE healthcare.Patient
-SET First_Name =	(CASE
-						WHEN @First_Name is null THEN First_Name
-						ELSE @First_Name END),
-	Last_Name =		(CASE
-						WHEN @Last_Name is null THEN Last_Name
-						ELSE @Last_Name END),
-	Region =		(CASE
-						WHEN @Region is null THEN Region
-						ELSE @Region END),
-	Nationality =	(CASE
-						WHEN @Nationality is null THEN Nationality
-						ELSE @Nationality END),
-	Country =		(CASE
-						WHEN @Country is null THEN Country
-						ELSE @Country END),
-	ICU =			(CASE
-						WHEN @ICU is null THEN ICU
-						ELSE @ICU END),
-	Age =			(CASE
-						WHEN @Age is null THEN Age
-						ELSE @Age END),
-	Hospitalized =	(CASE
-						WHEN @Hospitalized is null THEN Hospitalized
-						ELSE @Hospitalized END),
-	State =			(CASE
-						WHEN @State is null THEN State
-						ELSE @State END),
+SET firstName =	(CASE
+						WHEN @firstName is null THEN firstName
+						ELSE @firstName END),
+	lastName =		(CASE
+						WHEN @lastName is null THEN lastName
+						ELSE @lastName END),
+	region =		(CASE
+						WHEN @region is null THEN region
+						ELSE @region END),
+	nationality =	(CASE
+						WHEN @nationality is null THEN nationality
+						ELSE @nationality END),
+	country =		(CASE
+						WHEN @country is null THEN country
+						ELSE @country END),
+	intensiveCareUnite =			(CASE
+						WHEN @intensiveCareUnite is null THEN intensiveCareUnite
+						ELSE @intensiveCareUnite END),
+	age =			(CASE
+						WHEN @age is null THEN age
+						ELSE @age END),
+	hospitalized =	(CASE
+						WHEN @hospitalized is null THEN hospitalized
+						ELSE @hospitalized END),
+	state =			(CASE
+						WHEN @state is null THEN state
+						ELSE @state END),
 	Date_Entrance =	(CASE 
 						WHEN @Entrance_Date is null THEN Date_Entrance
 						ELSE @Entrance_Date END)
-	WHERE Id_Number = @id_number;
+	WHERE identification = @identification;
 
 END TRY
 
@@ -428,20 +438,20 @@ BEGIN CATCH
             ,ERROR_STATE() AS ErrorState  
             ,ERROR_PROCEDURE() AS ErrorProcedure  
             ,ERROR_LINE() AS ErrorLine  
-            ,ERROR_MESSAGE() AS ErrorMessage;
+            ,ERROR_MESSage() AS ErrorMessage;
 	RETURN;
 END CATCH
 
 
-IF (@Country IS NULL) SET @Country = @Old_Country;
+IF (@country IS NULL) SET @country = @Old_country;
 IF (@Entrance_Date IS NULL) SET @Entrance_Date = @Old_Date;
-IF (@State IS NULL) SET @State = @Old_State;
+IF (@state IS NULL) SET @state = @Old_State;
 
 
 
-IF (@Old_Country = @Country AND
+IF (@Old_country = @country AND
 	@Old_Date = @Entrance_Date AND
-	@Old_State != @State)
+	@Old_State != @state)
 	
 	BEGIN
 
@@ -452,25 +462,25 @@ IF (@Old_Country = @Country AND
 			Dead = (CASE @Old_State
 						WHEN 'Deceased' THEN Dead - 1
 						ELSE Dead END)
-		WHERE Date = @Old_Date
-		AND Country_Name = @Old_Country;
+		WHERE day = @Old_Date
+		AND country_Name = @Old_country;
 
 		UPDATE user_public.Population
-		SET	Cured = (CASE @State
+		SET	Cured = (CASE @state
 						WHEN 'Recovered' THEN Cured + 1
 						ELSE Cured END),
-			Dead = (CASE @State
+			Dead = (CASE @state
 						WHEN 'Deceased' THEN Dead + 1
 						ELSE Dead END)
-		WHERE Date = @Entrance_Date
-		AND Country_Name = @Country;
+		WHERE day = @Entrance_Date
+		AND country_Name = @country;
 
 
 	END;
 	
-ELSE IF (@Old_Country != @Country OR
+ELSE IF (@Old_country != @country OR
 	@Old_Date != @Entrance_Date OR
-	@Old_State != @State)
+	@Old_State != @state)
 
 	BEGIN
 	
@@ -482,40 +492,40 @@ ELSE IF (@Old_Country != @Country OR
 			Dead = (CASE @Old_State
 						WHEN 'Deceased' THEN Dead - 1
 						ELSE Dead END)
-		WHERE Date = @Old_Date
-		AND Country_Name = @Old_Country;
+		WHERE day = @Old_Date
+		AND country_Name = @Old_country;
 
-		IF EXISTS(SELECT Date, Country_Name
+		IF EXISTS(SELECT day, country_Name
 					FROM user_public.Population
-					WHERE Country_Name = @Country
-					AND Date = @Entrance_Date)
+					WHERE country_Name = @country
+					AND day = @Entrance_Date)
 			BEGIN
 		
 				UPDATE user_public.Population
 				SET Infected = Infected + 1,
-					Cured = (CASE @State
+					Cured = (CASE @state
 								WHEN 'Recovered' THEN Cured + 1
 								ELSE Cured END),
-					Dead = (CASE @State
+					Dead = (CASE @state
 								WHEN 'Deceased' THEN Dead + 1
 								ELSE Dead END)
-				WHERE Date = @Entrance_Date
-				AND Country_Name = @Country;
+				WHERE day = @Entrance_Date
+				AND country_Name = @country;
 			END;
 
 		ELSE
 
 			BEGIN
 			
-				INSERT INTO user_public.Population(Country_Name, Date, Infected, Cured, Dead)
+				INSERT INTO user_public.Population(country_Name, day, Infected, Cured, Dead)
 				VALUES(
-					@Country,
+					@country,
 					@Entrance_Date,
 					1,
-					(CASE @State
+					(CASE @state
 								WHEN 'Recovered' THEN 1
 								ELSE 0 END),
-					(CASE @State
+					(CASE @state
 								WHEN 'Deceased' THEN 1
 								ELSE 0 END));
 			END;
@@ -524,93 +534,94 @@ ELSE IF (@Old_Country != @Country OR
 END;
 GO
 
-CREATE PROCEDURE healthcare.Patient_Existence_Checker (@id_number NVARCHAR(50),
-													@First_Name VARCHAR(1000),
-													@Last_Name VARCHAR(1000),
-													@Region  VARCHAR(100),
-													@Nationality VARCHAR(100) = 'No Nationality',
-													@Country VARCHAR(100),
-													@Age TINYINT,
-													@ICU BIT = 0,
-													@Hospitalized BIT = 0,
-													@State VARCHAR(50),
+CREATE PROCEDURE healthcare.Patient_Existence_Checker (@identification NVARCHAR(50),
+													@firstName VARCHAR(1000),
+													@lastName VARCHAR(1000),
+													@region  VARCHAR(100),
+													@nationality VARCHAR(100) = 'No nationality',
+													@country VARCHAR(100),
+													@age TINYINT,
+													@intensiveCareUnite BIT = 0,
+													@hospitalized BIT = 0,
+													@state VARCHAR(50),
 													@Entrance_Date Date)
 AS
 BEGIN
 
-IF @id_number IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @First_Name IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Last_Name IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Region IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @identification IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @firstName IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @lastName IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @region IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
 IF @Entrance_Date IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Country IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Age IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @State IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @country IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @age IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @state IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
 
-	IF NOT EXISTS(SELECT id_number
+	IF NOT EXISTS(SELECT identification
 				FROM healthcare.Patient
-				WHERE @id_number = Id_Number)
+				WHERE @identification = identification)
 
 		BEGIN
 			
 			INSERT INTO healthcare.Patient
 			VALUES(
-				@id_number,
-				@First_Name,
-				@Last_Name,
-				@Region,
-				@Nationality,
-				@Country,
-				@Age,
-				@ICU,
-				@Hospitalized,
-				@State,
+				@identification,
+				@firstName,
+				@lastName,
+				@region,
+				@nationality,
+				@country,
+				@age,
+				@intensiveCareUnite,
+				@hospitalized,
+				@state,
 				@Entrance_Date);
 		END
 END;
 GO
 
-CREATE PROCEDURE healthcare.Contact_Existence_Checker (@id_number NVARCHAR(50),
-													@First_Name VARCHAR(1000),
-													@Last_Name VARCHAR(1000),
-													@Region  VARCHAR(100),
-													@Nationality VARCHAR(100) = 'No Nationality',
-													@Country VARCHAR(100),
+CREATE PROCEDURE healthcare.Contact_Existence_Checker (@identification NVARCHAR(50),
+													@firstName VARCHAR(1000),
+													@lastName VARCHAR(1000),
+													@region  VARCHAR(100),
+													@nationality VARCHAR(100) = 'No nationality',
+													@country VARCHAR(100),
 													@Address VARCHAR(500),
-													@Email VARCHAR(200),
-													@Age TINYINT)
+													@email VARCHAR(200),
+													@age TINYINT)
 AS
 BEGIN
 
-IF @id_number IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @First_Name IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Last_Name IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Region IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @identification IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @firstName IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @lastName IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @region IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
 IF @Address IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Country IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Age IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Email IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @country IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @age IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
+IF @email IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
 
-	IF NOT EXISTS(SELECT id_number
+	IF NOT EXISTS(SELECT identification
 				FROM healthcare.Contact
-				WHERE @id_number = Id_Number)
+				WHERE @identification = identification)
 
 		BEGIN
 			
 			INSERT INTO healthcare.Contact
 			VALUES(
-				@id_number,
-				@First_Name,
-				@Last_Name,
-				@Region,
-				@Nationality,
-				@Country,
+				@identification,
+				@firstName,
+				@lastName,
+				@region,
+				@nationality,
+				@country,
 				@Address,
-				@Email,
-				@Age);
+				@email,
+				@age);
 		END
 END;
 GO
 
 INSERT INTO admin.Patient_State VALUES ('Active'),('Infected'),('Recovered'),('Deceased');
 GO
+

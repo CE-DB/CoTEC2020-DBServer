@@ -1,4 +1,7 @@
-﻿using HotChocolate.Types;
+﻿using CoTEC_Server.DBModels;
+using HotChocolate.Types;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace CoTEC_Server.Logic.GraphQL.Types
 {
@@ -9,30 +12,78 @@ namespace CoTEC_Server.Logic.GraphQL.Types
         {
             base.Configure(descriptor);
 
-            descriptor.Field(a => a.firstName).Type<NonNullType<StringType>>();
+            descriptor.BindFieldsExplicitly();
 
-            descriptor.Field(a => a.lastName).Type<NonNullType<StringType>>();
+            descriptor.Field(t => t.FirstName).Type<NonNullType<StringType>>();
 
-            descriptor.Field(a => a.identification).Type<NonNullType<StringType>>();
+            descriptor.Field(t => t.LastName).Type<NonNullType<StringType>>();
 
-            descriptor.Field(a => a.age).Type<NonNullType<IntType>>();
+            descriptor.Field(t => t.Identification).Type<NonNullType<StringType>>();
 
-            descriptor.Field(a => a.nationality).Type<NonNullType<StringType>>();
+            descriptor.Field(t => t.Age).Type<NonNullType<IntType>>();
 
-            descriptor.Field(a => a.pathologies).Type<NonNullType<ListType<NonNullType<PathologyType>>>>();
+            descriptor.Field(t => t.Nationality).Type<NonNullType<StringType>>();
 
-            descriptor.Field(a => a.region).Type<NonNullType<RegionType>>();
+            descriptor.Field(t => t.Hospitalized).Type<NonNullType<BooleanType>>();
 
-            descriptor.Field(a => a.hospitalized).Type<NonNullType<BooleanType>>();
+            descriptor.Field(t => t.IntensiveCareUnite).Type<NonNullType<BooleanType>>();
 
-            descriptor.Field(a => a.intensiveCareUnite).Type<NonNullType<BooleanType>>();
+            descriptor.Field(t => t.RegionNavigation)
+                .Type<NonNullType<RegionType>>()
+                .Name("origin");
 
-            descriptor.Field(a => a.state).Type<NonNullType<PatientStateType>>();
+            descriptor.Field(f => f.State)
+                .Type<NonNullType<StringType>>();
 
-            descriptor.Field(a => a.latestContacts).Type<NonNullType<ListType<NonNullType<ContactType>>>>();
+            descriptor.Field("pathologies")
+                .Type<NonNullType<ListType<NonNullType<PathologyType>>>>()
+                .Resolver(ctx => {
 
-            descriptor.Field(a => a.medications).Type<NonNullType<ListType<NonNullType<MedicationType>>>>();
+                    return ctx.Service<CoTEC_DBContext>().Pathology
+                    .FromSqlRaw("SELECT Name, description, treatment " +
+                    "FROM admin.Pathology " +
+                    "WHERE EXISTS(SELECT Name " +
+                                "FROM healthcare.Patient_Pathology " +
+                                "WHERE Patient_Id = {0})", ctx.Parent<Patient>().Identification)
+                    .ToList();
+                
+                
+                });
+
+            descriptor.Field("medication")
+                .Type<NonNullType<ListType<NonNullType<MedicationType>>>>()
+                .Resolver(ctx => {
+
+                    return ctx.Service<CoTEC_DBContext>().Medication
+                    .FromSqlRaw("SELECT Medicine, Pharmacist " +
+                    "FROM admin.Medication " +
+                    "WHERE EXISTS(SELECT Medicine " +
+                                 "FROM healthcare.Patient_Medication " +
+                                 "WHERE Patient_Id = {0})", ctx.Parent<Patient>().Identification)
+                    .ToList();
+                });
+
+            descriptor.Field("contacts")
+                .Type<NonNullType<ListType<NonNullType<ContactVisitType>>>>()
+                .Resolver(ctx => {
+
+                    return ctx.Service<CoTEC_DBContext>().PatientContact
+                    .FromSqlRaw("SELECT Patient_Id, Contact_Id, last_visit " +
+                    "FROM healthcare.Patient_Contact " +
+                    "WHERE Patient_Id = {0}", ctx.Parent<Patient>().Identification)
+                    .Include(s => s.Contact)
+                    .Include(s => s.Patient)
+                    .ToList();
+
+
+                });
+
+            descriptor.Field(f => f.DateEntrance)
+                .Type<NonNullType<DateType>>();
+
+
         }
+
 
     }
 }

@@ -1,4 +1,4 @@
-using CoTEC_Server.Database;
+using CoTEC_Server.DBModels;
 using CoTEC_Server.Logic;
 using CoTEC_Server.Logic.Auth;
 using CoTEC_Server.Logic.GraphQL;
@@ -35,8 +35,8 @@ namespace CoTEC_Server
 
             // Add DbContext
             services
-              .AddDbContext<SQLServerContext>(options =>
-                options.UseSqlServer(SQLServerContext.DbConnectionString));
+              .AddDbContext<CoTEC_DBContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("SQLServerConnection")));
 
             services.AddAuthentication("OAuth")
                 .AddJwtBearer("OAuth", config => 
@@ -80,8 +80,9 @@ namespace CoTEC_Server
                     .New()
                     .BindClrType<DateTime, DateType>()
                     // Here, we add the LocationQueryType as a QueryType
-                    .AddQueryType<QueryType>()
+                    .AddQueryType<Query>()
                     .AddMutationType<Mutation>()
+                    //.AddMutationType<Mutation>()
                     .AddAuthorizeDirectiveType()
                     .Create());
 

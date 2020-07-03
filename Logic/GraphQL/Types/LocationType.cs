@@ -1,29 +1,45 @@
-﻿using HotChocolate.Types;
+﻿using CoTEC_Server.DBModels;
+using HotChocolate.Types;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace CoTEC_Server.Logic.GraphQL.Types
 {
-    public class LocationType : ObjectType<Location>
+    public class LocationType : ObjectType<Increment>
     {
 
-        protected override void Configure(IObjectTypeDescriptor<Location> descriptor)
+        protected override void Configure(IObjectTypeDescriptor<Increment> descriptor)
         {
             base.Configure(descriptor);
 
-            descriptor.Field(t => t.Name).Type<StringType>();
+            descriptor.Name("Location");
 
-            descriptor.Field(t => t.TotalInfected).Type<NonNullType<IntType>>();
+            descriptor.BindFieldsExplicitly();
 
-            descriptor.Field(t => t.Totalrecovered).Type<NonNullType<IntType>>();
+            descriptor.Field(f => f.totalInfected)
+                .Type<NonNullType<IntType>>();
 
-            descriptor.Field(t => t.TotalDeseased).Type<NonNullType<IntType>>();
+            descriptor.Field(f => f.totalRecovered)
+                .Type<NonNullType<IntType>>();
 
-            descriptor.Field(t => t.TotalActive).Type<NonNullType<IntType>>();
+            descriptor.Field(f => f.totalDeceased)
+                .Type<NonNullType<IntType>>();
 
-            descriptor.Field(t => t.DailyIncrement).Type<NonNullType<ListType<NonNullType<IncrementType>>>>();
+            descriptor.Field(f => f.totalActive)
+                .Type<NonNullType<IntType>>();
 
-            descriptor.Field(t => t.SanitaryMeasures).Type<NonNullType<ListType<NonNullType<SanitaryMeasureType>>>>();
+            descriptor.Field("dailyIncrement")
+                .Type<NonNullType<ListType<NonNullType<IncrementType>>>>()
+                .Resolver(ctx => { 
 
-            descriptor.Field(t => t.ContentionMeasures).Type<NonNullType<ListType<NonNullType<ContentionMeasureType>>>>();
+                    return ctx.Service<CoTEC_DBContext>().Population
+                        .FromSqlRaw("SELECT day, '' AS country_Name, SUM(Infected) AS Infected, SUM(Cured) AS Cured, SUM(Dead) AS Dead, SUM(Active) AS Active " +
+                        "FROM user_public.Population " +
+                        "GROUP BY day " +
+                        "ORDER BY day ASC")
+                        .ToList();
+                
+                });
         }
 
     }

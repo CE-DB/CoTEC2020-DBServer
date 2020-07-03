@@ -1,8 +1,5 @@
-﻿using HotChocolate.Types;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using CoTEC_Server.DBModels;
+using HotChocolate.Types;
 
 namespace CoTEC_Server.Logic.GraphQL.Types
 {
@@ -13,16 +10,17 @@ namespace CoTEC_Server.Logic.GraphQL.Types
         {
             base.Configure(descriptor);
 
-            descriptor.Field(t => t.country).Type<CountryType>();
+            descriptor.BindFieldsExplicitly();
 
-            descriptor.Field(t => t.description).Type<NonNullType<StringType>>();
+            descriptor.Field(t => t.Name)
+                .Type<NonNullType<StringType>>();
 
-            descriptor.Field(t => t.name).Type<NonNullType<StringType>>();
+            descriptor.Field(t => t.Description)
+                .Type<StringType>();
 
-            descriptor.Field(t => t.startDate).Type<DateType>();
 
-            descriptor.Field(t => t.endDate).Type<DateType>();
         }
+
 
     }
 }

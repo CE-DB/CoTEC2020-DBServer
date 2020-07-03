@@ -1,4 +1,5 @@
-﻿using HotChocolate.Types;
+﻿using CoTEC_Server.DBModels;
+using HotChocolate.Types;
 
 namespace CoTEC_Server.Logic.GraphQL.Types
 {
@@ -9,10 +10,15 @@ namespace CoTEC_Server.Logic.GraphQL.Types
         {
             base.Configure(descriptor);
 
-            descriptor.Field(t => t.name).Type<NonNullType<StringType>>();
+            descriptor.BindFieldsExplicitly();
 
-            descriptor.Field(t => t.pharmaceutical).Type<NonNullType<StringType>>();
+            descriptor.Field(f => f.Medicine).Type<NonNullType<StringType>>()
+                .Name("name");
+
+            descriptor.Field(f => f.Pharmacist).Type<StringType>()
+                .Name("pharmaceutical");
         }
+
 
     }
 }

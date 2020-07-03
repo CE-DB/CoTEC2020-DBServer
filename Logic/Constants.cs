@@ -10,7 +10,7 @@
         public const string AdminPolicyName = "Admin";
         public const string HealthCenterPolicyName = "HealthCenter";
         public const string AdminRoleName = "Admin";
-        public const string HealthCenterRoleName = "Admin";
+        public const string HealthCenterRoleName = AdminRoleName;
 
     }
 }

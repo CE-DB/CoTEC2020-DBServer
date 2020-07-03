@@ -1,4 +1,5 @@
-﻿using HotChocolate.Types;
+﻿using CoTEC_Server.DBModels;
+using HotChocolate.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,23 +7,36 @@ using System.Threading.Tasks;
 
 namespace CoTEC_Server.Logic.GraphQL.Types
 {
-    public class IncrementType : ObjectType<Increment>
+    public class IncrementType : ObjectType<Population>
     {
 
-        protected override void Configure(IObjectTypeDescriptor<Increment> descriptor)
+        protected override void Configure(IObjectTypeDescriptor<Population> descriptor)
         {
             base.Configure(descriptor);
 
-            descriptor.Field(t => t.day).Type<NonNullType<DateType>>();
+            descriptor.BindFieldsExplicitly();
 
-            descriptor.Field(t => t.totalActive).Type<NonNullType<IntType>>();
+            descriptor.Name("Increment");
 
-            descriptor.Field(t => t.totalDeseased).Type<NonNullType<IntType>>();
+            descriptor.Field(f => f.Day)
+                .Type<NonNullType<DateType>>();
 
-            descriptor.Field(t => t.totalInfected).Type<NonNullType<IntType>>();
+            descriptor.Field(f => f.Infected)
+                .Type<NonNullType<IntType>>();
 
-            descriptor.Field(t => t.totalRecovered).Type<NonNullType<IntType>>();
+            descriptor.Field(f => f.Cured)
+                .Type<NonNullType<IntType>>()
+                .Name("recovered");
+
+            descriptor.Field(f => f.Dead)
+                .Type<NonNullType<IntType>>()
+                .Name("deceased");
+
+            descriptor.Field(f => f.Active)
+                .Type<NonNullType<IntType>>();
         }
+
+
 
     }
 }

@@ -1,9 +1,12 @@
-﻿using CoTEC_Server.Database;
+﻿using CoTEC_Server.DBModels;
+using CoTEC_Server.Logic.GraphQL.Types;
 using HotChocolate;
 using HotChocolate.AspNetCore.Authorization;
+using HotChocolate.Types;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
-using System.Reflection.Metadata;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CoTEC_Server.Logic.GraphQL
@@ -14,200 +17,290 @@ namespace CoTEC_Server.Logic.GraphQL
         { }
 
         /// <summary>
-        /// Get the total of cases for a certain country or global count.
+        /// Get the continents available
         /// </summary>
-        /// <param name="countryName">Filter results by country name.</param>
-        public async Task<Types.Location> totalCountCases([Service] SQLServerContext dbCont, string countryName)
-        {
-            if (countryName == null)
-            {
-                return await dbCont.Locations.FromSqlRaw("").FirstOrDefaultAsync();
-            }
-
-            return await dbCont.Locations.FromSqlRaw("").FirstOrDefaultAsync();
-        }
-
-        /// <summary>
-        /// Get contention measures for a certain country.
-        /// </summary>
-        /// <param name="countryName">Filter results by country name.</param>
-        public async Task<Types.Location> contentionMeasuresActive([Service] SQLServerContext dbCont, string countryName)
-        {
-            if (countryName == null)
-            {
-                return await dbCont.Locations.FromSqlRaw("").FirstOrDefaultAsync();
-            }
-
-            return await dbCont.Locations.FromSqlRaw("").FirstOrDefaultAsync();
-        }
-
-        /// <summary>
-        /// Get countries available in database.
-        /// </summary>
-        /// <param name="countryName">Filter results by country name.</param>
-        public async Task<List<Types.Country>> countries([Service] SQLServerContext dbCont, string countryName)
-        {
-            if (countryName == null)
-            {
-                return await dbCont.Countries.FromSqlRaw("").ToListAsync();
-            }
-
-            return await dbCont.Countries.FromSqlRaw("").ToListAsync();
-        }
-
-        /// <summary>
-        /// Get regions available in database.
-        /// </summary>
-        /// <param name="name">Filter results by region name.</param>
-        [Authorize(Policy = Constants.AdminPolicyName)]
-        public async Task<List<Types.Region>> regions([Service] SQLServerContext dbCont, string name)
+        /// <param name="name">Filter results by name.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ContinentType>>>))]
+        public async Task<List<Continent>> continents(
+            [Service] CoTEC_DBContext dbCont,
+            string name)
         {
             if (name == null)
             {
-                return await dbCont.Regions.FromSqlRaw("").ToListAsync();
+                return await dbCont.Continent.Include(s => s.Country).ToListAsync();
             }
 
-            return await dbCont.Regions.FromSqlRaw("").ToListAsync();
+            return await dbCont.Continent.Where(s => s.Name.Contains(name.Trim())).Include(s => s.Country).ToListAsync();
         }
 
+
         /// <summary>
-        /// Get pathologies available in database.
+        /// Get the continents available
         /// </summary>
-        /// <param name="name">Filter results by pathology name.</param>
-        [Authorize(Policy = Constants.AdminPolicyName)]
-        public async Task<List<Types.Pathology>> pathologies([Service] SQLServerContext dbCont, string name)
+        /// <param name="name">Filter results by name.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<RegionType>>>))]
+        public async Task<List<Region>> regions([Service] CoTEC_DBContext dbCont, string name)
         {
             if (name == null)
             {
-                return await dbCont.Pathologies.FromSqlRaw("").ToListAsync();
+                return await dbCont.Region
+                    .Include(s => s.CountryNavigation)
+                        .ThenInclude(c => c.ContinentNavigation)
+                    .ToListAsync();
             }
 
-            return await dbCont.Pathologies.FromSqlRaw("").ToListAsync();
+            return await dbCont.Region
+                .Where(s => s.Name.Contains(name.Trim()))
+                .Include(s => s.CountryNavigation)
+                        .ThenInclude(c => c.ContinentNavigation)
+                .ToListAsync();
         }
 
+
         /// <summary>
-        /// Get patient states available in database.
+        /// Get the countries available
         /// </summary>
-        /// <param name="name">Filter results by patient state name.</param>
-        [Authorize(Policy = Constants.AdminPolicyName)]
-        public async Task<List<Types.PatientState>> patientStates([Service] SQLServerContext dbCont, string name)
+        /// <param name="name">Filter results by name.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<CountryType>>>))]
+        public async Task<List<Country>> countries([Service] CoTEC_DBContext dbCont, string name)
         {
             if (name == null)
             {
-                return await dbCont.PatientStates.FromSqlRaw("").ToListAsync();
+                return await dbCont.Country
+                    .Include(s => s.Region)
+                    .Include(s => s.ContinentNavigation)
+                    .ToListAsync();
             }
 
-            return await dbCont.PatientStates.FromSqlRaw("").ToListAsync();
+            return await dbCont.Country
+                .Where(s => s.Name.Contains(name.Trim()))
+                .Include(s => s.Region)
+                .Include(s => s.ContinentNavigation)
+                .ToListAsync();
         }
 
         /// <summary>
-        /// Get health centers available in database.
+        /// Get the medications available
         /// </summary>
-        /// <param name="name">Filter results by hospital name.</param>
-        [Authorize(Policy = Constants.AdminPolicyName)]
-        public async Task<List<Types.Healthcenter>> Healthcenters([Service] SQLServerContext dbCont, string name)
+        /// <param name="name">Filter results by name.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<MedicationType>>>))]
+        //[Authorize(Policy = Constants.AdminPolicyName)]
+        public async Task<List<Medication>> medications([Service] CoTEC_DBContext dbCont, string name)
         {
             if (name == null)
             {
-                return await dbCont.HealthCenters.FromSqlRaw("").ToListAsync();
+                return await dbCont.Medication.ToListAsync();
             }
 
-            return await dbCont.HealthCenters.FromSqlRaw("").ToListAsync();
+            return await dbCont.Medication.Where(s => s.Medicine.Contains(name.Trim())).ToListAsync();
         }
 
         /// <summary>
-        /// Get sanitary measures available in database.
+        /// Get visit events of contacts to patients
         /// </summary>
-        /// <param name="name">Filter results by measure name.</param>
-        [Authorize(Policy = Constants.AdminPolicyName)]
-        public async Task<List<Types.SanitaryMeasure>> SanitaryMeasures([Service] SQLServerContext dbCont, string name)
+        /// <param name="patientId">Filter results by identification of patient.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ContactVisitType>>>))]
+       // [Authorize(Policy = Constants.HealthCenterPolicyName)]
+        public async Task<List<PatientContact>> contactVisits([Service] CoTEC_DBContext dbCont, string patientId)
+        {
+            if (patientId == null)
+            {
+                return await dbCont.PatientContact
+                    .Include(s => s.Contact)
+                    .Include(s => s.Patient)
+                    .ToListAsync();
+            }
+
+            return await dbCont.PatientContact
+                .Where(s => s.PatientId.Contains(patientId.Trim()))
+                .Include(s => s.Contact)
+                .Include(s => s.Patient)
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Get the pathologies available
+        /// </summary>
+        /// <param name="name">Filter results by name.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<PathologyType>>>))]
+       // [Authorize(Policy = Constants.AdminPolicyName)]
+        public async Task<List<Pathology>> pathologies([Service] CoTEC_DBContext dbCont, string name)
         {
             if (name == null)
             {
-                return await dbCont.SanitaryMeasures.FromSqlRaw("").ToListAsync();
+                return await dbCont.Pathology.ToListAsync();
             }
 
-            return await dbCont.SanitaryMeasures.FromSqlRaw("").ToListAsync();
+            return await dbCont.Pathology.Where(s => s.Name.Contains(name.Trim())).ToListAsync();
         }
 
         /// <summary>
-        /// Get contaiment measures available in database.
+        /// Get the contention measures available
         /// </summary>
-        /// <param name="name">Filter results by measure name.</param>
-        [Authorize(Policy = Constants.AdminPolicyName)]
-        public async Task<List<Types.ContentionMeasure>> ContentionMeasures([Service] SQLServerContext dbCont, string name)
+        /// <param name="name">Filter results by name.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ContentionMeasureType>>>))]
+       // [Authorize(Policy = Constants.AdminPolicyName)]
+        public async Task<List<ContentionMeasure>> contentionMeasures([Service] CoTEC_DBContext dbCont, string name)
         {
             if (name == null)
             {
-                return await dbCont.ContentionMeasures.FromSqlRaw("").ToListAsync();
+                return await dbCont.ContentionMeasure.ToListAsync();
             }
 
-            return await dbCont.ContentionMeasures.FromSqlRaw("").ToListAsync();
+            return await dbCont.ContentionMeasure
+                .Where(t => t.Name.Contains(name.Trim()))
+                .ToListAsync();
         }
 
         /// <summary>
-        /// Get medications available in database.
+        /// Get the sanitary measures available
         /// </summary>
-        /// <param name="name">Filter results by medication name.</param>
-        [Authorize(Policy = Constants.AdminPolicyName)]
-        public async Task<List<Types.Medication>> medications([Service] SQLServerContext dbCont, string name)
+        /// <param name="name">Filter results by name.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<SanitaryMeasureType>>>))]
+        //[Authorize(Policy = Constants.AdminPolicyName)]
+        public async Task<List<SanitaryMeasure>> sanitaryMeasures([Service] CoTEC_DBContext dbCont, string name)
         {
             if (name == null)
             {
-                return await dbCont.Medications.FromSqlRaw("").ToListAsync();
+                return await dbCont.SanitaryMeasure.ToListAsync();
             }
 
-            return await dbCont.Medications.FromSqlRaw("").ToListAsync();
+            return await dbCont.SanitaryMeasure
+                .Where(t => t.Name.Contains(name.Trim()))
+                .ToListAsync();
         }
 
         /// <summary>
-        /// Get patients available in database.
+        /// Get the patients available
         /// </summary>
-        /// <param name="id">Filter results by identification number of patient.</param>
-        [Authorize(Policy = Constants.HealthCenterPolicyName)]
-        public async Task<List<Types.Patient>> patients([Service] SQLServerContext dbCont, string? id)
+        /// <param name="id">Filter results by name.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<PatientType>>>))]
+        //[Authorize(Policy = Constants.HealthCenterPolicyName)]
+        public async Task<List<Patient>> patients([Service] CoTEC_DBContext dbCont, string id)
         {
             if (id == null)
             {
-                return await dbCont.Patients.FromSqlRaw("").ToListAsync();
+                return await dbCont.Patient
+                    .Include(s => s.RegionNavigation)
+                        .ThenInclude(r => r.CountryNavigation)
+                            .ThenInclude(r => r.ContinentNavigation)
+                    .ToListAsync();
             }
 
-            return await dbCont.Patients.FromSqlRaw("").ToListAsync();
+            return await dbCont.Patient
+                .Where(t => t.Identification.Contains(id.Trim()))
+                .Include(s => s.RegionNavigation)
+                    .ThenInclude(r => r.CountryNavigation)
+                        .ThenInclude(r => r.ContinentNavigation)
+                .ToListAsync();
         }
 
         /// <summary>
-        /// Get contacts available in database.
+        /// Get the patients available
         /// </summary>
-        /// <param name="id">Filter results by identification number of contact.</param>
-        [Authorize(Policy = Constants.HealthCenterPolicyName)]
-        public async Task<List<Types.Patient>> contacts([Service] SQLServerContext dbCont, int? id)
+        /// <param name="id">Filter results by name.</param>
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<ContactType>>>))]
+        //[Authorize(Policy = Constants.HealthCenterPolicyName)]
+        public async Task<List<Contact>> contacts([Service] CoTEC_DBContext dbCont, string id)
         {
-            return null;
+            if (id == null)
+            {
+                return await dbCont.Contact
+                    .Include(s => s.RegionNavigation)
+                        .ThenInclude(r => r.CountryNavigation)
+                            .ThenInclude(r => r.ContinentNavigation)
+                    .ToListAsync();
+            }
+
+            return await dbCont.Contact
+                .Where(t => t.Identification.Equals(id))
+                .Include(s => s.RegionNavigation)
+                    .ThenInclude(r => r.CountryNavigation)
+                        .ThenInclude(r => r.ContinentNavigation)
+                .ToListAsync();
         }
 
         /// <summary>
-        /// Get patients Report
+        /// Get the patient states available
         /// </summary>
-        /// <returns>
-        /// Endpoint string for download PDF file.
-        /// </returns>
-        [Authorize(Policy = Constants.HealthCenterPolicyName)]
-        public async Task<string> patientsReport([Service] SQLServerContext dbCont)
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<StringType>>>))]
+        //[Authorize(Policy = Constants.AdminPolicyName)]
+        public List<string> patientStates([Service] CoTEC_DBContext dbCont)
         {
-            return null;
+
+            var data = dbCont.PatientState.ToList();
+
+            List<string> result = new List<string>();
+
+            foreach (var elm in data)
+            {
+                result.Add(elm.Name);
+
+            }
+
+            return result;
         }
 
         /// <summary>
-        /// Get new cases and deaths Report
+        /// Get the patient states available
         /// </summary>
-        /// <returns>
-        /// Endpoint string for download PDF file.
-        /// </returns>
-        [Authorize(Policy = Constants.HealthCenterPolicyName)]
-        public async Task<string> newCasesReport([Service] SQLServerContext dbCont)
+        [GraphQLType(typeof(NonNullType<ListType<NonNullType<HealthCenterType>>>))]
+        //[Authorize(Policy = Constants.AdminPolicyName)]
+        public async Task<List<Hospital>> healthCenters([Service] CoTEC_DBContext dbCont, string name, string region, string country)
         {
-            return null;
+
+            if (name == null || region == null || country == null)
+            {
+                return await dbCont.Hospital
+                .Include(s => s.ManagerNavigation)
+                .Include(s => s.RegionNavigation)
+                    .ThenInclude(r => r.CountryNavigation)
+                        .ThenInclude(r => r.ContinentNavigation)
+                .ToListAsync();
+
+            }
+
+            return await dbCont.Hospital
+                .Where(s => s.Name.Contains(name.Trim()) && 
+                s.Region.Contains(region.Trim()) &&
+                s.Country.Contains(country.Trim()))
+                .Include(s => s.ManagerNavigation)
+                .Include(s => s.RegionNavigation)
+                    .ThenInclude(r => r.CountryNavigation)
+                        .ThenInclude(r => r.ContinentNavigation)
+                .ToListAsync();
+
+
         }
 
+
+        /// <summary>
+        /// Get the patient states available
+        /// </summary>
+        [GraphQLType(typeof(NonNullType<LocationType>))]
+        public async Task<Increment> globalGeneralReport([Service] CoTEC_DBContext dbCont)
+        {
+
+            return await dbCont.Increment
+                .FromSqlRaw("SELECT SUM(Infected) AS totalInfected, SUM(Cured) AS totalRecovered, SUM(Dead) AS totalDeceased, SUM(Active) AS totalActive " +
+                "FROM user_public.Population")
+                .FirstOrDefaultAsync();
+        }
+
+
+        /// <summary>
+        /// Get the patient states available
+        /// </summary>
+        [GraphQLType(typeof(CountryLocationType))]
+        public async Task<CountryLocation> countryGeneralReport([Service] CoTEC_DBContext dbCont, [GraphQLNonNullType] string country)
+        {
+
+            return await dbCont.CountryLocation
+                .FromSqlRaw("SELECT country_Name AS name, SUM(Infected) AS totalInfected, SUM(Cured) AS totalRecovered, SUM(Dead) AS totalDeceased, SUM(Active) AS totalActive " +
+                "FROM user_public.Population " +
+                "WHERE country_Name = {0} " +
+                "GROUP BY country_Name", country)
+                .FirstOrDefaultAsync();
+        }
     }
 }

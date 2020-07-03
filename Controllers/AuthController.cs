@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -36,7 +37,7 @@ namespace CoTEC_Server.Controllers
                 new Claim(JwtRegisteredClaimNames.Sub, user.id.Trim()),
                 new Claim(JwtRegisteredClaimNames.Iss, Constants.Issuer),
                 //TODO: Insert correct role
-                new Claim(Constants.RoleClaim, "Role")
+                new Claim(Constants.RoleClaim, Constants.AdminRoleName)
             };
 
             var key = new SymmetricSecurityKey(
@@ -74,7 +75,5 @@ namespace CoTEC_Server.Controllers
             return Ok(new { access_token = tokenR });
 
         }
-
-        
     }
 }

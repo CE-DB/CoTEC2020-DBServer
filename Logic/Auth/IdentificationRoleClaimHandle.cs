@@ -1,15 +1,14 @@
-﻿using CoTEC_Server.Database;
+﻿using CoTEC_Server.DBModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Routing.Template;
 using System.Threading.Tasks;
 
 namespace CoTEC_Server.Logic.Auth
 {
     public class IdentificationRoleClaimHandle : AuthorizationHandler<IdentificationRoleClaim>
     {
-        private readonly SQLServerContext db;
+        private readonly CoTEC_DBContext db;
 
-        public IdentificationRoleClaimHandle(SQLServerContext db)
+        public IdentificationRoleClaimHandle(CoTEC_DBContext db)
         {
             this.db = db;
         }
@@ -18,6 +17,7 @@ namespace CoTEC_Server.Logic.Auth
             AuthorizationHandlerContext context,
             IdentificationRoleClaim requirement)
         {
+            context.Succeed(requirement);
 
             //TODO: PUt code to verify role of user.
             return Task.CompletedTask;
