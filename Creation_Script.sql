@@ -5,7 +5,7 @@ GO
 
 
 USE CoTEC_DB;
-CREATE LOGIN CoTEC_ServerApp_Login WITH PASSWORD = '2Lfy.KMNwe{{>&@AZ&A3';
+CREATE LOGIN CoTEC_ServerApp_Login3 WITH PASSWORD = '2Lfy.KMNwe{{>&@AZ&A3';
 GO
 
 CREATE USER CoTEC_ServerApp FOR LOGIN CoTEC_ServerApp_Login WITH DEFAULT_SCHEMA = admin;
@@ -27,7 +27,9 @@ EXEC sp_addrolemember 'db_datareader', 'CoTEC_ServerApp'
 GO
 
 CREATE TABLE admin.Continent(
-	Name VARCHAR(100) PRIMARY KEY
+	Name VARCHAR(100),
+	
+	CONSTRAINT PK_Continent_CoTEC PRIMARY KEY(Name)
 );
 GO
 
@@ -35,8 +37,8 @@ CREATE TABLE admin.country(
 	Name VARCHAR(100),
 	Continent VARCHAR(100),
 
-	PRIMARY KEY(Name),
-	FOREIGN KEY(Continent) REFERENCES admin.Continent(Name)
+	CONSTRAINT PK_Country_CoTEC PRIMARY KEY(Name),
+	CONSTRAINT FK__Country_Continent__CoTEC FOREIGN KEY(Continent) REFERENCES admin.Continent(Name)
 );
 GO
 
@@ -44,8 +46,8 @@ CREATE TABLE admin.region(
 	Name VARCHAR(100),
 	country VARCHAR(100),
 
-	PRIMARY KEY(Name, country),
-	FOREIGN KEY(country) REFERENCES admin.country(Name)
+	CONSTRAINT PK_Region_CoTEC PRIMARY KEY(Name, country),
+	CONSTRAINT FK__Region_Country__CoTEC FOREIGN KEY(country) REFERENCES admin.country(Name)
 );
 GO
 
@@ -59,8 +61,8 @@ CREATE TABLE user_public.Population(
 	Dead int NOT NULL CHECK (Dead >= 0),
 	Active AS Infected - Cured - Dead PERSISTED NOT NULL CHECK (Active >= 0),
 
-	PRIMARY KEY(day, country_Name),
-	FOREIGN KEY(country_Name) REFERENCES admin.country(Name)
+	CONSTRAINT PK_Population_CoTEC PRIMARY KEY(day, country_Name),
+	CONSTRAINT FK__Population__CoTEC FOREIGN KEY(country_Name) REFERENCES admin.country(Name)
 );
 GO
 
@@ -68,7 +70,7 @@ CREATE TABLE admin.Contention_Measure(
 	Name VARCHAR(80),
 	Description VARCHAR(5000) DEFAULT 'No Description',
 
-	PRIMARY KEY(Name)
+	CONSTRAINT PK_Contention_Measure_CoTEC PRIMARY KEY(Name)
 );
 GO
 
@@ -78,9 +80,9 @@ CREATE TABLE user_public.Contention_Measures_Changes(
 	Start_Date Date,
 	End_Date Date,
 
-	PRIMARY KEY(Measure_Name, country_Name, Start_Date),
-	FOREIGN KEY(country_Name) REFERENCES admin.country(Name),
-	FOREIGN KEY(Measure_Name) REFERENCES admin.Contention_Measure(Name)
+	CONSTRAINT PK_Contention_Measure_Changes_CoTEC PRIMARY KEY(Measure_Name, country_Name, Start_Date),
+	CONSTRAINT FK__ContentionMeasureChanges_Country__CoTEC FOREIGN KEY(country_Name) REFERENCES admin.country(Name),
+	CONSTRAINT FK__ContentionMeasureChanges_ContentionMeasure__CoTEC FOREIGN KEY(Measure_Name) REFERENCES admin.Contention_Measure(Name)
 );
 GO
 
@@ -88,7 +90,7 @@ CREATE TABLE admin.Sanitary_Measure(
 	Name VARCHAR(100),
 	Description VARCHAR(5000) DEFAULT 'No Description',
 
-	PRIMARY KEY(Name)
+	CONSTRAINT PK_Sanitary_Measure_CoTEC PRIMARY KEY(Name)
 );
 GO
 
@@ -98,38 +100,42 @@ CREATE TABLE user_public.Sanitary_Measures_Changes(
 	Start_Date Date,
 	End_Date Date,
 
-	PRIMARY KEY(Measure_Name, country_Name, Start_Date),
-	FOREIGN KEY(country_Name) REFERENCES admin.country(Name),
-	FOREIGN KEY(Measure_Name) REFERENCES admin.Sanitary_Measure(Name)
+	CONSTRAINT PK_Sanitary_Measures_Changes_CoTEC PRIMARY KEY(Measure_Name, country_Name, Start_Date),
+	CONSTRAINT FK__SanitaryMeasuresChanges_Country__CoTEC FOREIGN KEY(country_Name) REFERENCES admin.country(Name),
+	CONSTRAINT FK__SanitaryMeasuresChanges_SanitaryMeasure__CoTEC FOREIGN KEY(Measure_Name) REFERENCES admin.Sanitary_Measure(Name)
 );
 GO
 
 CREATE TABLE admin.Medication(
 	Medicine VARCHAR(80),
 	Pharmacist VARCHAR(80) DEFAULT 'Unknown',
-	PRIMARY KEY(Medicine)
+	CONSTRAINT PK_Medication_CoTEC PRIMARY KEY(Medicine)
 );
 GO
 
 CREATE TABLE admin.Patient_State(
 	name VARCHAR(50),
-	PRIMARY KEY(Name)
+	CONSTRAINT PK_Patient_State_CoTEC PRIMARY KEY(Name)
 );
 GO
 
 CREATE TABLE admin.Staff(
-	Id_Code NVARCHAR(50) PRIMARY KEY,
+	Id_Code NVARCHAR(50),
 	firstName VARCHAR(1000) NOT NULL,
 	lastName VARCHAR(1000) NOT NULL,
 	Password NVARCHAR(2000) NOT NULL,
-	Role VARCHAR(20) NOT NULL
+	Role VARCHAR(20) NOT NULL,
+
+	CONSTRAINT PK_Staff_CoTEC PRIMARY KEY(Id_Code)
 );
 GO
 
 CREATE TABLE admin.Pathology(
-	Name VARCHAR(150) PRIMARY KEY,
+	Name VARCHAR(150),
 	Description VARCHAR(5000) DEFAULT 'No Description',
 	Treatment VARCHAR(5000) DEFAULT 'No Treatment',
+
+	CONSTRAINT PK_Pathology_CoTEC PRIMARY KEY(Name)
 );
 GO
 
@@ -144,8 +150,8 @@ CREATE TABLE healthcare.Contact(
 	email VARCHAR(200) NOT NULL,
 	age tinyint DEFAULT 0 CHECK (age >= 0),
 
-	PRIMARY KEY(identification),
-	FOREIGN KEY(region, country) REFERENCES admin.region(Name, country)
+	CONSTRAINT PK_Contact_CoTEC PRIMARY KEY(identification),
+	CONSTRAINT FK__Pathology_Region__CoTEC FOREIGN KEY(region, country) REFERENCES admin.region(Name, country)
 );
 GO
 
@@ -157,9 +163,9 @@ CREATE TABLE admin.Hospital(
 	ICU_Capacity smallint NOT NULL CHECK (ICU_Capacity >= 0),
 	Manager NVARCHAR(50) NOT NULL,
 
-	PRIMARY KEY(Name, region, country),
-	FOREIGN KEY(region, country) REFERENCES admin.region(Name, country),
-	FOREIGN KEY(Manager) REFERENCES healthcare.Contact(identification)
+	CONSTRAINT PK_Hospital_CoTEC PRIMARY KEY(Name, region, country),
+	CONSTRAINT FK__Hospital_Region__CoTEC FOREIGN KEY(region, country) REFERENCES admin.region(Name, country),
+	CONSTRAINT FK__Hospital_Contact__CoTEC FOREIGN KEY(Manager) REFERENCES healthcare.Contact(identification)
 );
 GO
 
@@ -176,9 +182,9 @@ CREATE TABLE healthcare.Patient(
 	state VARCHAR(50) NOT NULL,
 	Date_Entrance Date NOT NULL,
 
-	PRIMARY KEY(identification),
-	FOREIGN KEY(region, country) REFERENCES admin.region(Name, country),
-	FOREIGN KEY(state) REFERENCES admin.Patient_State(Name)
+	CONSTRAINT PK_Patient_CoTEC PRIMARY KEY(identification),
+	CONSTRAINT FK__Patient_Region__CoTEC FOREIGN KEY(region, country) REFERENCES admin.region(Name, country),
+	CONSTRAINT FK__Patient_PatientState__CoTEC FOREIGN KEY(state) REFERENCES admin.Patient_State(Name)
 );
 GO
 
@@ -188,9 +194,9 @@ CREATE TABLE admin.Hospital_Workers(
 	region VARCHAR(100),
 	country VARCHAR(100),
 
-	PRIMARY KEY(Id_Code, Name, region, country),
-	FOREIGN KEY(Name, region, country) REFERENCES admin.Hospital(Name, region, country),
-	FOREIGN KEY(Id_Code) REFERENCES admin.Staff(Id_Code)
+	CONSTRAINT PK_Hospital_Workers_CoTEC PRIMARY KEY(Id_Code, Name, region, country),
+	CONSTRAINT FK__HospitalWorkers_Hospital__CoTEC FOREIGN KEY(Name, region, country) REFERENCES admin.Hospital(Name, region, country),
+	CONSTRAINT FK__HospitalWorkers_Staff__CoTEC FOREIGN KEY(Id_Code) REFERENCES admin.Staff(Id_Code)
 );
 GO
 
@@ -198,9 +204,9 @@ CREATE TABLE healthcare.Patient_Medication(
 	Patient_Id NVARCHAR(50),
 	Medication VARCHAR(80),
 
-	PRIMARY KEY(Patient_Id, Medication),
-	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(identification),
-	FOREIGN KEY(Medication) REFERENCES admin.Medication(Medicine)
+	CONSTRAINT PK_Patient_Medication_CoTEC PRIMARY KEY(Patient_Id, Medication),
+	CONSTRAINT FK__PatientMedication_Patient__CoTEC FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(identification),
+	CONSTRAINT FK__PatientMedication_Medication__CoTEC FOREIGN KEY(Medication) REFERENCES admin.Medication(Medicine)
 );
 GO
 
@@ -208,9 +214,9 @@ CREATE TABLE healthcare.Patient_Pathology(
 	Pathology_Name VARCHAR(150),
 	Patient_Id NVARCHAR(50),
 
-	PRIMARY KEY(Pathology_Name, Patient_Id),
-	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(identification),
-	FOREIGN KEY(Pathology_Name) REFERENCES admin.Pathology(Name)
+	CONSTRAINT PK_Patient_Pathology_CoTEC PRIMARY KEY(Pathology_Name, Patient_Id),
+	CONSTRAINT FK__PatientPathology_Patient__CoTEC FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(identification),
+	CONSTRAINT FK__PatientPathology_Pathology__CoTEC FOREIGN KEY(Pathology_Name) REFERENCES admin.Pathology(Name)
 );
 GO
 
@@ -218,8 +224,8 @@ CREATE TABLE admin.Pathology_Symptoms(
 	Pathology VARCHAR(150),
 	Symptom VARCHAR(100),
 
-	PRIMARY KEY(Pathology, Symptom),
-	FOREIGN KEY(Pathology) REFERENCES admin.Pathology(Name)
+	CONSTRAINT PK_Pathology_Symptoms_CoTEC PRIMARY KEY(Pathology, Symptom),
+	CONSTRAINT FK__PathologySymptoms_Pathology__CoTEC FOREIGN KEY(Pathology) REFERENCES admin.Pathology(Name)
 );
 GO
 
@@ -227,9 +233,9 @@ CREATE TABLE healthcare.Contact_Pathology(
 	Pathology_name VARCHAR(150),
 	Contact_Id NVARCHAR(50),
 
-	PRIMARY KEY(Contact_Id, Pathology_name),
-	FOREIGN KEY(Contact_Id) REFERENCES healthcare.Contact(identification),
-	FOREIGN KEY(Pathology_name) REFERENCES admin.Pathology(Name)
+	CONSTRAINT PK_Contact_Pathology_CoTEC PRIMARY KEY(Contact_Id, Pathology_name),
+	CONSTRAINT FK__ContactPathology_Contact__CoTEC FOREIGN KEY(Contact_Id) REFERENCES healthcare.Contact(identification),
+	CONSTRAINT FK__ContactPathology_Pathology__CoTEC FOREIGN KEY(Pathology_name) REFERENCES admin.Pathology(Name)
 );
 GO
 
@@ -238,9 +244,9 @@ CREATE TABLE healthcare.Patient_Contact(
 	Contact_Id NVARCHAR(50),
 	last_visit Date NOT NULL DEFAULT CONVERT(Date, GETDATE()),
 
-	PRIMARY KEY(Contact_Id, Patient_Id, last_visit),
-	FOREIGN KEY(Contact_Id) REFERENCES healthcare.Contact(identification),
-	FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(identification)
+	CONSTRAINT PK_Patient_Contact_CoTEC PRIMARY KEY(Contact_Id, Patient_Id, last_visit),
+	CONSTRAINT FK__PatientContact_Contact__CoTEC FOREIGN KEY(Contact_Id) REFERENCES healthcare.Contact(identification),
+	CONSTRAINT FK__PatientContact_Patient__CoTEC FOREIGN KEY(Patient_Id) REFERENCES healthcare.Patient(identification)
 );
 GO
 
