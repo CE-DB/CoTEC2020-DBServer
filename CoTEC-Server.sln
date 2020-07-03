@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoTEC-Server", "CoTEC-Server.csproj", "{073CBB0E-F7FE-4F08-8ECD-B06F3D36BB93}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoTEC-Shitversion", "..\CoTEC-Shitversion\CoTEC-Shitversion.csproj", "{5D3C0451-0782-4906-BF4C-68CE8691B8DB}"
+Project("{159641D6-6404-4A2A-AE62-294DE0FE8301}") = "dts", "..\dts\dts.dtproj", "{02BB9D8F-CAE7-4DEB-ABAF-72E116BF0097}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,12 +20,12 @@ Global
 		{073CBB0E-F7FE-4F08-8ECD-B06F3D36BB93}.Development|Any CPU.Build.0 = Debug|Any CPU
 		{073CBB0E-F7FE-4F08-8ECD-B06F3D36BB93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{073CBB0E-F7FE-4F08-8ECD-B06F3D36BB93}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5D3C0451-0782-4906-BF4C-68CE8691B8DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5D3C0451-0782-4906-BF4C-68CE8691B8DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5D3C0451-0782-4906-BF4C-68CE8691B8DB}.Development|Any CPU.ActiveCfg = Debug|Any CPU
-		{5D3C0451-0782-4906-BF4C-68CE8691B8DB}.Development|Any CPU.Build.0 = Debug|Any CPU
-		{5D3C0451-0782-4906-BF4C-68CE8691B8DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5D3C0451-0782-4906-BF4C-68CE8691B8DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02BB9D8F-CAE7-4DEB-ABAF-72E116BF0097}.Debug|Any CPU.ActiveCfg = Development
+		{02BB9D8F-CAE7-4DEB-ABAF-72E116BF0097}.Debug|Any CPU.Build.0 = Development
+		{02BB9D8F-CAE7-4DEB-ABAF-72E116BF0097}.Development|Any CPU.ActiveCfg = Development
+		{02BB9D8F-CAE7-4DEB-ABAF-72E116BF0097}.Development|Any CPU.Build.0 = Development
+		{02BB9D8F-CAE7-4DEB-ABAF-72E116BF0097}.Release|Any CPU.ActiveCfg = Development
+		{02BB9D8F-CAE7-4DEB-ABAF-72E116BF0097}.Release|Any CPU.Build.0 = Development
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

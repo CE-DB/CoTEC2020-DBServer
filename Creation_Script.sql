@@ -51,14 +51,13 @@ CREATE TABLE admin.region(
 GO
 
 
-
 CREATE TABLE user_public.Population(
 	day Date,
 	country_Name VARCHAR(100),
 	Infected int NOT NULL CHECK (Infected >= 0),
 	Cured int NOT NULL CHECK (Cured >= 0),
 	Dead int NOT NULL CHECK (Dead >= 0),
-	Active AS Infected - Cured - Dead PERSISTED NOT NULL CHECK (Active >= 0),
+	Active AS Infected - Cured - Dead PERSISTED NOT NULL,
 
 	CONSTRAINT PK_Population_CoTEC PRIMARY KEY(day, country_Name),
 	CONSTRAINT FK__Population__CoTEC FOREIGN KEY(country_Name) REFERENCES admin.country(Name)
@@ -310,10 +309,8 @@ BEGIN
 							WHEN 'Deceased' THEN Dead + 1
 							ELSE Dead
 							END)
-			WHERE EXISTS(SELECT p.day
-				FROM user_public.Population AS p, inserted
-				WHERE p.day = inserted.Date_Entrance
-				AND p.country_Name = @country)
+			WHERE day = (SELECT Date_Entrance FROM inserted)
+			AND country_Name = @country
 		END
 
 	ELSE
@@ -634,6 +631,55 @@ BEGIN
 END;
 GO
 
-INSERT INTO admin.Patient_State VALUES ('Active'),('Infected'),('Recovered'),('Deceased');
+CREATE PROCEDURE user_public.patients_by_country
+AS
+BEGIN
+	SELECT country_Name AS 'Country',
+	SUM(Infected) AS 'Infected',
+	SUM(Cured) AS 'Cured', 
+	SUM(Dead) AS 'Dead', 
+	SUM(Active) AS 'Active'
+	FROM user_public.Population
+	GROUP BY country_Name
+	UNION all
+	SELECT 'Total', 
+	SUM(Infected) AS 'Infected', 
+	SUM(Cured) AS 'Cured', 
+	SUM(Dead) AS 'Dead', 
+	SUM(Active) AS 'Active'
+	FROM user_public.Population
+END
 GO
 
+CREATE PROCEDURE user_public.deaths_and_cases
+AS
+BEGIN
+	SELECT country_Name AS 'Country',
+	'New cases' AS 'Type',
+	SUM(case when day = CONVERT(Date, GETDATE()-6, 111) then Infected else 0 end) AS 'Fecha1',
+	SUM(case when day = CONVERT(Date, GETDATE()-5, 111) then Infected else 0 end) AS 'Fecha2',
+	SUM(case when day = CONVERT(Date, GETDATE()-4, 111) then Infected else 0 end) AS 'Fecha3',
+	SUM(case when day = CONVERT(Date, GETDATE()-3, 111) then Infected else 0 end) AS 'Fecha4',
+	SUM(case when day = CONVERT(Date, GETDATE()-2, 111) then Infected else 0 end) AS 'Fecha5',
+	SUM(case when day = CONVERT(Date, GETDATE()-1, 111) then Infected else 0 end) AS 'Fecha6',
+	SUM(case when day = CONVERT(Date, GETDATE(), 111) then Infected else 0 end) AS 'Fecha7'
+	FROM user_public.Population
+	GROUP BY country_Name
+	UNION ALL
+	SELECT country_Name AS 'Country',
+	'Deaths' AS 'Type',
+	SUM(case when day = CONVERT(Date, GETDATE()-6, 111) then Dead else 0 end) AS 'Fecha1',
+	SUM(case when day = CONVERT(Date, GETDATE()-5, 111) then Dead else 0 end) AS 'Fecha2',
+	SUM(case when day = CONVERT(Date, GETDATE()-4, 111) then Dead else 0 end) AS 'Fecha3',
+	SUM(case when day = CONVERT(Date, GETDATE()-3, 111) then Dead else 0 end) AS 'Fecha4',
+	SUM(case when day = CONVERT(Date, GETDATE()-2, 111) then Dead else 0 end) AS 'Fecha5',
+	SUM(case when day = CONVERT(Date, GETDATE()-1, 111) then Dead else 0 end) AS 'Fecha6',
+	SUM(case when day = CONVERT(Date, GETDATE(), 111) then Dead else 0 end) AS 'Fecha7'
+	FROM user_public.Population
+	GROUP BY country_Name
+	ORDER BY country_Name
+END
+GO
+
+INSERT INTO admin.Patient_State VALUES ('Active'),('Infected'),('Recovered'),('Deceased');
+GO

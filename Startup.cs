@@ -2,6 +2,8 @@ using CoTEC_Server.DBModels;
 using CoTEC_Server.Logic;
 using CoTEC_Server.Logic.Auth;
 using CoTEC_Server.Logic.GraphQL;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using HotChocolate;
 using HotChocolate.AspNetCore;
 using HotChocolate.Types;
@@ -14,6 +16,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System;
+using System.IO;
 using System.Text;
 
 namespace CoTEC_Server
@@ -30,6 +33,9 @@ namespace CoTEC_Server
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+
+            services.AddCors();
             services.AddControllers();
 
 
@@ -97,6 +103,15 @@ namespace CoTEC_Server
                 app.UseDeveloperExceptionPage();
             }
 
+            var architectureFolder = (IntPtr.Size == 8) ? "64 bit" : "32 bit";
+            var wkHtmlToPdfPath = System.IO.Path.Combine(env.ContentRootPath, $"wkhtmltox\\v0.12.4\\{architectureFolder}\\libwkhtmltox");
+            CustomAssemblyLoadContext context = new CustomAssemblyLoadContext();
+            context.LoadUnmanagedLibrary(wkHtmlToPdfPath);
+
+            app.UseCors(builder => builder
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader());
 
             app.UseHttpsRedirection();
 

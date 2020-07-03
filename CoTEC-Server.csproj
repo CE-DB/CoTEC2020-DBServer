@@ -6,17 +6,60 @@
 	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+  </PropertyGroup>
+
 	<ItemGroup>
+		<PackageReference Include="DinkToPdf" Version="1.0.8" />
+		<PackageReference Include="DinkToPdfIncludesDependencies" Version="1.0.8" />
 		<PackageReference Include="HotChocolate.AspNetCore" Version="10.4.3" />
 		<PackageReference Include="HotChocolate.AspNetCore.Playground" Version="10.4.3" />
 		<PackageReference Include="HotChocolate.Types.Filters" Version="10.4.3" />
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.5" />
+		<PackageReference Include="Microsoft.AspNetCore.Cors" Version="2.2.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.5" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.5" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.5">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="160.2004021.0" />
+		<PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="log4net.config">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</None>
+		<None Update="wkhtmltox\v0.12.4\32 bit\libwkhtmltox.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</None>
+		<None Update="wkhtmltox\v0.12.4\32 bit\libwkhtmltox.dylib">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</None>
+		<None Update="wkhtmltox\v0.12.4\32 bit\libwkhtmltox.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</None>
+		<None Update="wkhtmltox\v0.12.4\64 bit\libwkhtmltox.dll">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</None>
+		<None Update="wkhtmltox\v0.12.4\64 bit\libwkhtmltox.dylib">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="wkhtmltox\v0.12.4\64 bit\libwkhtmltox.so">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+		<None Update="wwwroot\**\*">
+			<CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
 	</ItemGroup>
 
 

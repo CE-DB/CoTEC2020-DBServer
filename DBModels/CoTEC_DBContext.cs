@@ -38,6 +38,8 @@ namespace CoTEC_Server.DBModels
         public virtual DbSet<Staff> Staff { get; set; }
         public DbSet<Increment> Increment { get; set; }
         public DbSet<CountryLocation> CountryLocation { get; set; }
+        public DbSet<PatientsReport> PatientsReport { get; set; }
+        public DbSet<CasesAndDeaths> CasesAndDeaths { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -46,6 +48,10 @@ namespace CoTEC_Server.DBModels
             modelBuilder.Entity<Increment>(entity => entity.HasNoKey());
 
             modelBuilder.Entity<CountryLocation>(entity => entity.HasNoKey());
+
+            modelBuilder.Entity<PatientsReport>(entity => entity.HasNoKey());
+
+            modelBuilder.Entity<CasesAndDeaths>(entity => entity.HasNoKey());
 
             modelBuilder.Entity<Contact>(entity =>
             {

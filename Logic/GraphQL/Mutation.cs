@@ -4,13 +4,13 @@ using CoTEC_Server.Logic.GraphQL.Types.Input;
 using HotChocolate;
 using HotChocolate.Execution;
 using HotChocolate.Types;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
 
 namespace CoTEC_Server.Logic.GraphQL
 {
