@@ -15,6 +15,7 @@ namespace CoTEC_Server.Controllers
     public class AuthController : Controller
     {
 
+        [Route("Auth")]
         [HttpPost]
         public IActionResult Authenticate([FromBody] UserCred user)
         {

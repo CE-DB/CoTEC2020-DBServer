@@ -36,7 +36,7 @@ namespace CoTEC_Server
             // Add DbContext
             services
               .AddDbContext<CoTEC_DBContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("SQLServerConnection")));
+                options.UseSqlServer(Configuration.GetConnectionString("SQLServerConnectionOnline")));
 
             services.AddAuthentication("OAuth")
                 .AddJwtBearer("OAuth", config => 
