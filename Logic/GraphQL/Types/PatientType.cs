@@ -20,7 +20,7 @@ namespace CoTEC_Server.Logic.GraphQL.Types
 
             descriptor.Field(t => t.Identification).Type<NonNullType<StringType>>();
 
-            descriptor.Field(t => t.Age).Type<NonNullType<IntType>>();
+            descriptor.Field(t => t.Age).Type<NonNullType<ByteType>>();
 
             descriptor.Field(t => t.Nationality).Type<NonNullType<StringType>>();
 
@@ -29,8 +29,18 @@ namespace CoTEC_Server.Logic.GraphQL.Types
             descriptor.Field(t => t.IntensiveCareUnite).Type<NonNullType<BooleanType>>();
 
             descriptor.Field(t => t.RegionNavigation)
-                .Type<NonNullType<RegionType>>()
-                .Name("origin");
+                .Type<RegionType>()
+                .Name("region");
+
+            descriptor.Field("country")
+                .Type<NonNullType<CountryType>>()
+                .Resolver(ctx => {
+                    return ctx.Service<CoTEC_DBContext>()
+                    .Country
+                    .Where(c => c.Name.Equals(ctx.Parent<Patient>().Country))
+                        .Include(c => c.ContinentNavigation)
+                    .FirstOrDefault();
+                });
 
             descriptor.Field(f => f.State)
                 .Type<NonNullType<StringType>>();

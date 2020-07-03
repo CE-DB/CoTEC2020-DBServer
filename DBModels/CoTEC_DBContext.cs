@@ -405,7 +405,6 @@ namespace CoTEC_Server.DBModels
                     .IsUnicode(false);
 
                 entity.Property(e => e.Region)
-                    .IsRequired()
                     .HasColumnName("region")
                     .HasMaxLength(100)
                     .IsUnicode(false);

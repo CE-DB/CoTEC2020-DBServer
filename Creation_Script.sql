@@ -3,9 +3,8 @@ USE master;
 CREATE DATABASE CoTEC_DB;
 GO
 
-
 USE CoTEC_DB;
-CREATE LOGIN CoTEC_ServerApp_Login3 WITH PASSWORD = '2Lfy.KMNwe{{>&@AZ&A3';
+CREATE LOGIN CoTEC_ServerApp_Login WITH PASSWORD = '2Lfy.KMNwe{{>&@AZ&A3';
 GO
 
 CREATE USER CoTEC_ServerApp FOR LOGIN CoTEC_ServerApp_Login WITH DEFAULT_SCHEMA = admin;
@@ -173,8 +172,8 @@ CREATE TABLE healthcare.Patient(
 	identification NVARCHAR(50),
 	firstName VARCHAR(1000) NOT NULL,
 	lastName VARCHAR(1000) NOT NULL,
-	region VARCHAR(100) NOT NULL,
-	nationality VARCHAR(100) NOT NULL,
+	region VARCHAR(100),
+	nationality VARCHAR(100) DEFAULT 'No nationality',
 	country VARCHAR(100) NOT NULL,
 	age tinyint NOT NULL CHECK (age >= 0),
 	intensiveCareUnite bit NOT NULL DEFAULT 0,
@@ -265,6 +264,7 @@ IF EXISTS(SELECT Name
 			WHERE D.Name IN (SELECT Name FROM @Default_States))
 BEGIN
 	ROLLBACK TRANSACTION;
+	THROW 50005, 'You can''t delete or modify the following states: Active, Infected, Recovered, Deceased.', 1;
 END
 
 END
@@ -375,6 +375,7 @@ END
 GO
 
 CREATE PROCEDURE healthcare.Patients_updater (@identification NVARCHAR(50),
+													@newIdentification NVARCHAR(50) = NULL,
 													@firstName VARCHAR(1000) = NULL,
 													@lastName VARCHAR(1000) = NULL,
 													@region  VARCHAR(100) = NULL,
@@ -402,10 +403,13 @@ WHERE identification = @identification;
 
 BEGIN TRY
 
-	UPDATE healthcare.Patient
+UPDATE healthcare.Patient
 SET firstName =	(CASE
 						WHEN @firstName is null THEN firstName
 						ELSE @firstName END),
+	identification = (CASE
+						WHEN @newIdentification is null THEN identification
+						ELSE @newIdentification END),
 	lastName =		(CASE
 						WHEN @lastName is null THEN lastName
 						ELSE @lastName END),
@@ -438,16 +442,22 @@ SET firstName =	(CASE
 END TRY
 
 BEGIN CATCH
-	SELECT  
-            ERROR_NUMBER() AS ErrorNumber  
-            ,ERROR_SEVERITY() AS ErrorSeverity  
-            ,ERROR_STATE() AS ErrorState  
-            ,ERROR_PROCEDURE() AS ErrorProcedure  
-            ,ERROR_LINE() AS ErrorLine  
-            ,ERROR_MESSage() AS ErrorMessage;
-	RETURN;
-END CATCH
 
+	DECLARE @ErrorMessage NVARCHAR(4000);  
+    DECLARE @ErrorSeverity INT;  
+    DECLARE @ErrorState INT;  
+
+    SELECT   
+        @ErrorMessage = ERROR_MESSAGE(),  
+        @ErrorSeverity = ERROR_SEVERITY(),  
+        @ErrorState = ERROR_STATE();  
+
+    -- RAISE ERROR en bloque catch para forzar la devolución de error personalizado
+    RAISERROR (@ErrorMessage, -- Message text.  
+               @ErrorSeverity, -- Severity.  
+               @ErrorState -- State.  
+               );
+END CATCH
 
 IF (@country IS NULL) SET @country = @Old_country;
 IF (@Entrance_Date IS NULL) SET @Entrance_Date = @Old_Date;
@@ -553,36 +563,35 @@ CREATE PROCEDURE healthcare.Patient_Existence_Checker (@identification NVARCHAR(
 													@Entrance_Date Date)
 AS
 BEGIN
-
-IF @identification IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @firstName IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @lastName IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @region IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Entrance_Date IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @country IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @age IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @state IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-
 	IF NOT EXISTS(SELECT identification
 				FROM healthcare.Patient
 				WHERE @identification = identification)
 
 		BEGIN
 			
-			INSERT INTO healthcare.Patient
-			VALUES(
-				@identification,
-				@firstName,
-				@lastName,
-				@region,
-				@nationality,
-				@country,
-				@age,
-				@intensiveCareUnite,
-				@hospitalized,
-				@state,
-				@Entrance_Date);
+			BEGIN TRY
+				INSERT INTO healthcare.Patient
+				VALUES(
+					@identification,
+					@firstName,
+					@lastName,
+					@region,
+					@nationality,
+					@country,
+					@age,
+					@intensiveCareUnite,
+					@hospitalized,
+					@state,
+					@Entrance_Date);
+			END TRY
+			BEGIN CATCH
+				THROW;
+			END CATCH
 		END
+	ELSE
+		BEGIN
+			THROW 50006, 'This patient was already inserted', 1;
+		END;
 END;
 GO
 
@@ -597,34 +606,31 @@ CREATE PROCEDURE healthcare.Contact_Existence_Checker (@identification NVARCHAR(
 													@age TINYINT)
 AS
 BEGIN
-
-IF @identification IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @firstName IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @lastName IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @region IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @Address IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @country IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @age IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-IF @email IS NULL RAISERROR (15600,-1,-1, 'mysp_Patient_Existence_Checker');
-
 	IF NOT EXISTS(SELECT identification
 				FROM healthcare.Contact
 				WHERE @identification = identification)
-
 		BEGIN
-			
-			INSERT INTO healthcare.Contact
-			VALUES(
-				@identification,
-				@firstName,
-				@lastName,
-				@region,
-				@nationality,
-				@country,
-				@Address,
-				@email,
-				@age);
+			BEGIN TRY
+				INSERT INTO healthcare.Contact
+				VALUES(
+					@identification,
+					@firstName,
+					@lastName,
+					@region,
+					@nationality,
+					@country,
+					@Address,
+					@email,
+					@age);
+			END TRY
+			BEGIN CATCH
+				THROW;
+			END CATCH
 		END
+	ELSE
+		BEGIN
+			THROW 50006, 'This contact was already inserted', 1;
+		END;
 END;
 GO
 

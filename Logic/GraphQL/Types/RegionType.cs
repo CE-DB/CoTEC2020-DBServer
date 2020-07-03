@@ -12,7 +12,7 @@ namespace CoTEC_Server.Logic.GraphQL.Types
 
             descriptor.BindFieldsExplicitly();
 
-            descriptor.Field(f => f.Name).Type<NonNullType<StringType>>();
+            descriptor.Field(f => f.Name).Type<StringType>();
 
             descriptor.Field(f => f.CountryNavigation)
                 .Type<NonNullType<CountryType>>()
