@@ -4,7 +4,7 @@ CREATE DATABASE CoTEC_DB;
 GO
 
 USE CoTEC_DB;
-CREATE LOGIN CoTEC_ServerApp_Login WITH PASSWORD = '2Lfy.KMNwe{{>&@AZ&A3';
+CREATE LOGIN CoTEC_ServerApp_Login WITH PASSWORD = '276fy.QLIwe{{<&#YZ&A3';
 GO
 
 CREATE USER CoTEC_ServerApp FOR LOGIN CoTEC_ServerApp_Login WITH DEFAULT_SCHEMA = admin;
@@ -54,9 +54,9 @@ GO
 CREATE TABLE user_public.Population(
 	day Date,
 	country_Name VARCHAR(100),
-	Infected int NOT NULL CHECK (Infected >= 0),
-	Cured int NOT NULL CHECK (Cured >= 0),
-	Dead int NOT NULL CHECK (Dead >= 0),
+	Infected int NOT NULL,
+	Cured int NOT NULL,
+	Dead int NOT NULL,
 	Active AS Infected - Cured - Dead PERSISTED NOT NULL,
 
 	CONSTRAINT PK_Population_CoTEC PRIMARY KEY(day, country_Name),
@@ -149,7 +149,7 @@ CREATE TABLE healthcare.Contact(
 	age tinyint DEFAULT 0 CHECK (age >= 0),
 
 	CONSTRAINT PK_Contact_CoTEC PRIMARY KEY(identification),
-	CONSTRAINT FK__Pathology_Region__CoTEC FOREIGN KEY(region, country) REFERENCES admin.region(Name, country)
+	CONSTRAINT FK__Contact_Region__CoTEC FOREIGN KEY(region, country) REFERENCES admin.region(Name, country)
 );
 GO
 
@@ -354,10 +354,8 @@ BEGIN
 							WHEN 'Deceased' THEN Dead - 1
 							ELSE Dead
 							END)
-			WHERE EXISTS(SELECT p.day
-				FROM user_public.Population AS p, deleted
-				WHERE p.day = deleted.Date_Entrance
-				AND p.country_Name = @country)
+			WHERE day = (SELECT Date_Entrance FROM inserted)
+			AND country_Name = @country
 
 			DELETE
 			FROM user_public.Population
@@ -387,7 +385,7 @@ AS
 
 BEGIN
 
-IF @identification IS NULL RAISERROR (15600,-1,-1, 'mysp_Cases_Count_updater'); 
+IF @identification IS NULL RAISERROR (15600,-1,-1, 'mysp_Patients_Updater'); 
 
 DECLARE @Old_Date Date;
 DECLARE @Old_State VARCHAR(50);
@@ -440,20 +438,22 @@ END TRY
 
 BEGIN CATCH
 
-	DECLARE @ErrorMessage NVARCHAR(4000);  
-    DECLARE @ErrorSeverity INT;  
-    DECLARE @ErrorState INT;  
+	THROW
 
-    SELECT   
-        @ErrorMessage = ERROR_MESSAGE(),  
-        @ErrorSeverity = ERROR_SEVERITY(),  
-        @ErrorState = ERROR_STATE();  
+	--DECLARE @ErrorMessage NVARCHAR(4000);  
+ --   DECLARE @ErrorSeverity INT;  
+ --   DECLARE @ErrorState INT;  
 
-    -- RAISE ERROR en bloque catch para forzar la devolución de error personalizado
-    RAISERROR (@ErrorMessage, -- Message text.  
-               @ErrorSeverity, -- Severity.  
-               @ErrorState -- State.  
-               );
+ --   SELECT   
+ --       @ErrorMessage = ERROR_MESSAGE(),  
+ --       @ErrorSeverity = ERROR_SEVERITY(),  
+ --       @ErrorState = ERROR_STATE();  
+
+ --   -- RAISE ERROR en bloque catch para forzar la devolución de error personalizado
+ --   RAISERROR (@ErrorMessage, -- Message text.  
+ --              @ErrorSeverity, -- Severity.  
+ --              @ErrorState -- State.  
+ --              );
 END CATCH
 
 IF (@country IS NULL) SET @country = @Old_country;

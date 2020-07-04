@@ -39,7 +39,7 @@ namespace CoTEC_Server.Logic.GraphQL.Types
                     return ctx.Service<CoTEC_DBContext>().Pathology
                     .FromSqlRaw("SELECT Name, description, treatment " +
                     "FROM admin.Pathology " +
-                    "WHERE EXISTS(SELECT Name " +
+                    "WHERE Name IN(SELECT Pathology_name " +
                                 "FROM healthcare.Contact_Pathology " +
                                 "WHERE Contact_Id = {0})", ctx.Parent<Contact>().Identification)
                     .ToList();

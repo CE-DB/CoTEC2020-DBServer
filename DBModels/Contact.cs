@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace CoTEC_Server.DBModels
 {
-    public class Contact
+    public  class Contact
     {
         public Contact()
         {
@@ -22,9 +22,9 @@ namespace CoTEC_Server.DBModels
         public string Email { get; set; }
         public byte? Age { get; set; }
 
-        public Region RegionNavigation { get; set; }
-        public ICollection<ContactPathology> ContactPathology { get; set; }
-        public ICollection<Hospital> Hospital { get; set; }
-        public ICollection<PatientContact> PatientContact { get; set; }
+        public  Region RegionNavigation { get; set; }
+        public  ICollection<ContactPathology> ContactPathology { get; set; }
+        public  ICollection<Hospital> Hospital { get; set; }
+        public  ICollection<PatientContact> PatientContact { get; set; }
     }
 }

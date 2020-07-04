@@ -2,6 +2,7 @@
 using CoTEC_Server.Logic.GraphQL.Types;
 using CoTEC_Server.Logic.GraphQL.Types.Input;
 using HotChocolate;
+using HotChocolate;
 using HotChocolate.Execution;
 using HotChocolate.Types;
 using Microsoft.EntityFrameworkCore;
@@ -10,18 +11,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CoTEC_Server.Logic.GraphQL
 {
+    /// <summary>
+    /// This class manage all proccess for making an insertion in the database.
+    /// </summary>
     public class Mutation
     {
         public Mutation()
         { }
 
-        private QueryException ErrorQueryBuilder( 
-            string code, 
-            string message, 
+        /// <summary>
+        /// This function is for make an error with custom messages.
+        /// </summary>
+        /// <param name="code">The error code</param>
+        /// <param name="message">Message for the user.</param>
+        /// <param name="args">If the message has format you can insert variables here</param>
+        /// <returns>The error object to throw.</returns>
+        private QueryException ErrorQueryBuilder(
+            string code,
+            string message,
             params object[]? args)
         {
             return new QueryException(
@@ -32,6 +46,13 @@ namespace CoTEC_Server.Logic.GraphQL
                            .Build());
         }
 
+        /// <summary>
+        /// This function is for make an error with custom messages.
+        /// </summary>
+        /// <param name="sqlException">The exception object from Database.</param>
+        /// <param name="message">The message for user.</param>
+        /// <param name="args">If the message has format you can insert variables here</param>
+        /// <returns>The error object to throw.</returns>
         private QueryException ErrorQueryBuilder(SqlException sqlException,
             string message,
             params object[] args)
@@ -44,18 +65,13 @@ namespace CoTEC_Server.Logic.GraphQL
                            .Build());
         }
 
-        private IError CustomErrorBuilder(
-            string code,
-            string message,
-            params object[]? args)
-        {
-            return ErrorBuilder.New()
-                           .SetMessage(message, args)
-                           .SetCode(code)
-                           .SetExtension("DatabaseMessage", "NO ERROR")
-                           .Build();
-        }
-
+        /// <summary>
+        /// This is for make an error to throw using a list, in this way you can throw many errors at once.
+        /// </summary>
+        /// <param name="sqlException">The exception object from Database.</param>
+        /// <param name="message">The message for user.</param>
+        /// <param name="args"If the message has format you can insert variables here></param>
+        /// <returns>The error object to throw.</returns>
         private IError CustomErrorBuilder(SqlException sqlException,
             string message,
             params object[] args)
@@ -67,6 +83,24 @@ namespace CoTEC_Server.Logic.GraphQL
                            .Build();
         }
 
+        private IError CustomErrorBuilder(string code,
+            string message,
+            params object[] args)
+        {
+            return ErrorBuilder.New()
+                           .SetMessage(message, args)
+                           .SetCode(code)
+                           .SetExtension("DatabaseMessage", "NO ERROR")
+                           .Build();
+        }
+
+        /// <summary>
+        /// This is for add a region.
+        /// </summary>
+        /// <param name="dBContext">The context of database.</param>
+        /// <param name="name">The name for the region</param>
+        /// <param name="country">The name of the country where the region belongs to.</param>
+        /// <returns>The region object to send.</returns>
         [GraphQLType(typeof(RegionType))]
         public async Task<Region> addRegion(
             [Service] CoTEC_DBContext dBContext,
@@ -81,7 +115,7 @@ namespace CoTEC_Server.Logic.GraphQL
                     "NAME_EMPTY",
                     "The name can't be empty."
                     );
-                
+
             }
 
             if (string.IsNullOrEmpty(country))
@@ -121,7 +155,7 @@ namespace CoTEC_Server.Logic.GraphQL
                             sqlException,
                             "The region '{0}', with country '{1}' already exists.", name, country);
 
-                    } 
+                    }
                     else if (sqlException.Number.Equals(547))
                     {
 
@@ -163,7 +197,16 @@ namespace CoTEC_Server.Logic.GraphQL
                         .ThenInclude(c => c.ContinentNavigation)
                 .FirstOrDefaultAsync();
         }
-        
+
+        /// <summary>
+        /// This is for update the properties of a region.
+        /// </summary>
+        /// <param name="dBContext">The context of database.</param>
+        /// <param name="oldName">The name of the region to update</param>
+        /// <param name="oldCountry">The country name of the region to update.</param>
+        /// <param name="newName">The new name for the region.</param>
+        /// <param name="newCountry">The name of the new country for the region.</param>
+        /// <returns>The object with the region updated.</returns>
         [GraphQLType(typeof(RegionType))]
         public async Task<Region> updateRegion(
             [Service] CoTEC_DBContext dBContext,
@@ -268,7 +311,14 @@ namespace CoTEC_Server.Logic.GraphQL
                         .ThenInclude(c => c.ContinentNavigation)
                 .FirstOrDefaultAsync();
         }
-        
+
+        /// <summary>
+        /// This is for delete a region.
+        /// </summary>
+        /// <param name="dBContext">The context of database.</param>
+        /// <param name="name">The name of the region to delete.</param>
+        /// <param name="country">The country name of the region to delete.</param>
+        /// <returns>The object of the rergion deleted.</returns>
         [GraphQLType(typeof(RegionType))]
         public async Task<Region> deleteRegion(
             [Service] CoTEC_DBContext dBContext,
@@ -348,7 +398,13 @@ namespace CoTEC_Server.Logic.GraphQL
             };
 
         }
-        
+
+        /// <summary>
+        /// This is for add a patient.
+        /// </summary>
+        /// <param name="dBContext">The context of database.</param>
+        /// <param name="patient">The object with all data of the new patient.</param>
+        /// <returns>The patient object with the data inserted in database.</returns>
         [GraphQLType(typeof(PatientType))]
         public async Task<Patient> addPatient(
             [Service] CoTEC_DBContext dBContext,
@@ -421,7 +477,7 @@ namespace CoTEC_Server.Logic.GraphQL
                     patient.hospitalized,
                     string.IsNullOrEmpty(patient.state) ? null : patient.state,
                     patient.dateEntrance);*/
-                } 
+                }
                 else
                 {
                     await dBContext.Database.ExecuteSqlRawAsync(
@@ -546,7 +602,15 @@ namespace CoTEC_Server.Logic.GraphQL
                         .ThenInclude(r => r.ContinentNavigation)
                 .FirstOrDefaultAsync();
         }
-        
+
+        /// <summary>
+        /// This is for update a patient and modify pathologies and medications related.
+        /// When add a pathology or medication, the values incoming are the values that will be followed to make the update.
+        /// </summary>
+        /// <param name="dBContext"></param>
+        /// <param name="identification">The identification of the patient to update.</param>
+        /// <param name="input">The object with all the values to update.</param>
+        /// <returns>The patient object updated.</returns>
         [GraphQLType(typeof(PatientType))]
         public async Task<Patient> updatePatient(
             [Service] CoTEC_DBContext dBContext,
@@ -555,6 +619,7 @@ namespace CoTEC_Server.Logic.GraphQL
         {
 
             List<IError> errors = new List<IError>();
+            bool patientUpdated = true;
 
             try
             {
@@ -603,24 +668,28 @@ namespace CoTEC_Server.Logic.GraphQL
                             "You tried to change the identification code of patient with a related medication, contact or pathology. " +
                             "Please delete all elements related before deleting this patient. " +
                             "¿Or maybe you inserted the wrong country, patient state or region?"));
+                    patientUpdated = false;
                 }
                 else if (e.Number.Equals(2627))
                 {
                     errors.Add(CustomErrorBuilder(
                             e,
                             "You tried to insert an identification code that already exists."));
+                    patientUpdated = false;
                 }
                 else if (e.Number.Equals(15600))
                 {
                     throw ErrorQueryBuilder(
                             e,
                             "You must insert an identification code.");
+                    patientUpdated = false;
                 }
                 else
                 {
                     errors.Add(CustomErrorBuilder(
                             e,
                             "Unknown error."));
+                    patientUpdated = false;
                 }
 
             }
@@ -630,11 +699,7 @@ namespace CoTEC_Server.Logic.GraphQL
             }
             catch (Exception e)
             {
-                throw new QueryException(ErrorBuilder.New()
-                           .SetMessage("Unknown error")
-                           .SetCode(e.GetType().FullName)
-                           .SetExtension("DatabaseMessage", e.Message)
-                           .Build());
+                throw ErrorQueryBuilder(e.GetType().FullName, "Unknown error");
             }
 
             if (input.pathologies != null)
@@ -646,12 +711,27 @@ namespace CoTEC_Server.Logic.GraphQL
                 dbPath - input = 0 & dbPath.Count < input.Count => insert input => loop with errors
                 dbPath - input > 0 & dbPath.Count = input.Count => updatePatient dbPath*/
 
+                ICollection<string> currentDB;
 
-                ICollection<string> currentDB = dBContext.PatientPathology
-                    .Where(p => p.PatientId.Equals(string.IsNullOrEmpty(input.identification) ? identification : input.identification))
+                string pathIdentificationRef;
+
+                if (patientUpdated && !string.IsNullOrEmpty(input.identification))
+                {
+                    currentDB = dBContext.PatientPathology
+                    .Where(p => p.PatientId.Equals(input.identification))
                     .Select(s => new string(s.PathologyName))
                     .ToList();
-                    //.ConvertAll<string>(s => s.PathologyName);
+                    pathIdentificationRef = input.identification;
+                } 
+                else
+                {
+                    currentDB = dBContext.PatientPathology
+                    .Where(p => p.PatientId.Equals(identification))
+                    .Select(s => new string(s.PathologyName))
+                    .ToList();
+                    pathIdentificationRef = identification;
+                }
+                //.ConvertAll<string>(s => s.PathologyName);
 
                 ICollection<string> fromDB = currentDB.Except(input.pathologies).ToList();
 
@@ -668,8 +748,8 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "DELETE FROM healthcare.Patient_Pathology " +
                                 "WHERE Pathology_Name = {0} " +
                                 "AND Patient_Id = {1}"
-                                ,path
-                                ,string.IsNullOrEmpty(input.identification) ? identification : input.identification);
+                                , path
+                                , pathIdentificationRef);
                         }
                         catch (SqlException sqlException)
                         {
@@ -708,7 +788,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                .Build());
                         }
                     }
-                } 
+                }
                 else if (fromDB.Count.Equals(0) && currentDB.Count < input.pathologies.Count)
                 {
                     foreach (var path in inputPath)
@@ -722,7 +802,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "{0}," +
                                 "{1})"
                                 , path
-                                , string.IsNullOrEmpty(input.identification) ? identification : input.identification);
+                                , pathIdentificationRef);
                         }
                         catch (SqlException sqlException)
                         {
@@ -782,7 +862,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "AND Patient_Id = {2}"
                                 , path.Item2
                                 , path.Item1
-                                , string.IsNullOrEmpty(input.identification) ? identification : input.identification);
+                                , pathIdentificationRef);
                         }
                         catch (SqlException sqlException)
                         {
@@ -833,11 +913,27 @@ namespace CoTEC_Server.Logic.GraphQL
                 dbPath - input = 0 & dbPath.Count < input.Count => insert input => loop with errors
                 dbPath - input > 0 & dbPath.Count = input.Count => updatePatient dbPath*/
 
+                ICollection<string> currentDB;
 
-                ICollection<string> currentDB = dBContext.PatientMedication
-                    .Where(p => p.PatientId.Equals(string.IsNullOrEmpty(input.identification) ? identification : input.identification))
+                string medicalIdentificationRef;
+
+                if (patientUpdated && !string.IsNullOrEmpty(input.identification))
+                {
+                    currentDB = dBContext.PatientMedication
+                    .Where(p => p.PatientId.Equals(input.identification))
                     .Select(s => new string(s.Medication))
                     .ToList();
+                    medicalIdentificationRef = input.identification;
+                }
+                else
+                {
+                    currentDB = dBContext.PatientMedication
+                    .Where(p => p.PatientId.Equals(identification))
+                    .Select(s => new string(s.Medication))
+                    .ToList();
+                    medicalIdentificationRef = identification;
+                }
+
                 //.ConvertAll<string>(s => s.PathologyName);
 
                 ICollection<string> fromDB = currentDB.Except(input.medication).ToList();
@@ -856,7 +952,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "WHERE Medication = {0} " +
                                 "AND Patient_Id = {1}"
                                 , med
-                                , string.IsNullOrEmpty(input.identification) ? identification : input.identification);
+                                , medicalIdentificationRef);
                         }
                         catch (SqlException sqlException)
                         {
@@ -909,7 +1005,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "{0}," +
                                 "{1})"
                                 , med
-                                , string.IsNullOrEmpty(input.identification) ? identification : input.identification);
+                                , medicalIdentificationRef);
                         }
                         catch (SqlException sqlException)
                         {
@@ -969,7 +1065,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "AND Patient_Id = {2}"
                                 , path.Item2
                                 , path.Item1
-                                , string.IsNullOrEmpty(input.identification) ? identification : input.identification);
+                                , medicalIdentificationRef);
                         }
                         catch (SqlException sqlException)
                         {
@@ -1024,7 +1120,12 @@ namespace CoTEC_Server.Logic.GraphQL
                 .FirstOrDefaultAsync();
         }
 
-       
+        /// <summary>
+        /// This is for delete a patient.
+        /// </summary>
+        /// <param name="dBContext"></param>
+        /// <param name="identification">The identification of the patient to delete.</param>
+        /// <returns>The data of the patient deleted.</returns>
         [GraphQLType(typeof(PatientType))]
         public async Task<Patient> deletePatient(
             [Service] CoTEC_DBContext dBContext,
@@ -1090,12 +1191,19 @@ namespace CoTEC_Server.Logic.GraphQL
                            .SetExtension("DatabaseMessage", e.Message)
                            .Build());
             }
-            
+
             return p;
 
         }
 
-        
+        /// <summary>
+        /// This is for add a event when some contact visits a patient.
+        /// </summary>
+        /// <param name="dBContext"></param>
+        /// <param name="patientId">The id code of the patient who is visited.</param>
+        /// <param name="contactId">The id code of the visitor contact.</param>
+        /// <param name="visitDate">The date of the visit. In the format YYYY-MM-DD</param>
+        /// <returns>The object with the information inserted.</returns>
         [GraphQLType(typeof(ContactVisitType))]
         public async Task<PatientContact> addContactVisit(
             [Service] CoTEC_DBContext dBContext,
@@ -1126,8 +1234,8 @@ namespace CoTEC_Server.Logic.GraphQL
             {
 
                 ContactId = contactId,
-                 PatientId = patientId,
-                 LastVisit = visitDate
+                PatientId = patientId,
+                LastVisit = visitDate
 
             };
 
@@ -1195,7 +1303,16 @@ namespace CoTEC_Server.Logic.GraphQL
                 .Include(s => s.Patient)
                 .FirstOrDefaultAsync();
         }
-        
+
+        /// <summary>
+        /// This is for update the visit event.
+        /// </summary>
+        /// <param name="dBContext"></param>
+        /// <param name="patientId">The id code of the patient who is visited.</param>
+        /// <param name="contactId">The id code of the visitor contact.</param>
+        /// <param name="visitDate">The date of the visit. In the format YYYY-MM-DD</param>
+        /// <param name="input">The object with the data for update.</param>
+        /// <returns>The object with the information inserted.</returns>
         [GraphQLType(typeof(ContactVisitType))]
         public async Task<PatientContact> updateContactVisit(
             [Service] CoTEC_DBContext dBContext,
@@ -1311,7 +1428,15 @@ namespace CoTEC_Server.Logic.GraphQL
                 .Include(s => s.Patient)
                 .FirstOrDefaultAsync();
         }
-        
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="dBContext"></param>
+        /// <param name="patientId"></param>
+        /// <param name="contactId"></param>
+        /// <param name="visitDate"></param>
+        /// <returns></returns>
         [GraphQLType(typeof(ContactVisitType))]
         public async Task<PatientContact> deleteContactVisit(
             [Service] CoTEC_DBContext dBContext,
@@ -1393,7 +1518,7 @@ namespace CoTEC_Server.Logic.GraphQL
             return p;
 
         }
-        
+
         [GraphQLType(typeof(StringType))]
         public async Task<string> addPatientState(
             [Service] CoTEC_DBContext dBContext,
@@ -1452,7 +1577,7 @@ namespace CoTEC_Server.Logic.GraphQL
 
             return (await dBContext.PatientState.Where(p => p.Name.Equals(name)).FirstOrDefaultAsync()).Name;
         }
-        
+
         [GraphQLType(typeof(StringType))]
         public async Task<string> updatePatientState(
             [Service] CoTEC_DBContext dBContext,
@@ -1824,7 +1949,7 @@ namespace CoTEC_Server.Logic.GraphQL
 
                 int rows = await dBContext.Database.ExecuteSqlRawAsync(
                     "DELETE FROM admin.Medication " +
-                    "WHERE name = {0}", name);
+                    "WHERE Medicine = {0}", name);
 
                 if (rows < 1)
                 {
@@ -2467,6 +2592,8 @@ namespace CoTEC_Server.Logic.GraphQL
 
             List<IError> errors = new List<IError>();
 
+            bool updateSuccess = true;
+
             try
             {
                 int rows = await dBContext.Database.ExecuteSqlRawAsync(
@@ -2476,15 +2603,15 @@ namespace CoTEC_Server.Logic.GraphQL
                                     " ELSE {0} END), " +
                     "Description = (CASE" +
                                     " WHEN {1} is null THEN Description " +
-                                    " ELSE {1} END) " +
+                                    " ELSE {1} END), " +
                     "Treatment = (CASE" +
                                     " WHEN {2} is null THEN Treatment " +
                                     " ELSE {2} END), " +
                     "WHERE Name = {3}",
-                    string.IsNullOrEmpty(input.name.Trim()) ? null : input.name.Trim(),
+                    string.IsNullOrEmpty(input.name) ? null : input.name,
                     string.IsNullOrEmpty(input.description) ? null : input.description,
                     string.IsNullOrEmpty(input.treatment) ? null : input.treatment,
-                    name.Trim());
+                    name);
 
                 if (rows < 1)
                 {
@@ -2504,18 +2631,21 @@ namespace CoTEC_Server.Logic.GraphQL
                             e,
                             "You tried to change the name of a pathology with a related symptoms, contact or patient. " +
                             "Please delete all elements related before deleting this pathology."));
+                    updateSuccess = false;
                 }
                 else if (e.Number.Equals(2627))
                 {
                     errors.Add(CustomErrorBuilder(
                             e,
                             "You tried to insert a name that already exists."));
+                    updateSuccess = false;
                 }
                 else
                 {
                     errors.Add(CustomErrorBuilder(
                             e,
                             "Unknown error."));
+                    updateSuccess = false;
                 }
 
             }
@@ -2542,11 +2672,26 @@ namespace CoTEC_Server.Logic.GraphQL
                 dbPath - input = 0 & dbPath.Count < input.Count => insert input => loop with errors
                 dbPath - input > 0 & dbPath.Count = input.Count => updatePatient dbPath*/
 
+                ICollection<string> currentDB;
 
-                ICollection<string> currentDB = dBContext.PathologySymptoms
-                    .Where(p => p.Pathology.Equals(string.IsNullOrEmpty(input.name) ? name : input.name))
-                    .Select(s => new string(s.Symptom))
-                    .ToList();
+                string pathNameRef;
+
+                if (updateSuccess && !string.IsNullOrEmpty(input.name))
+                {
+                    currentDB = dBContext.PathologySymptoms
+                                        .Where(p => p.Pathology.Equals(input.name))
+                                        .Select(s => new string(s.Symptom))
+                                        .ToList();
+                    pathNameRef = input.name;
+                }
+                else
+                {
+                    currentDB = dBContext.PathologySymptoms
+                                        .Where(p => p.Pathology.Equals(name))
+                                        .Select(s => new string(s.Symptom))
+                                        .ToList();
+                    pathNameRef = name;
+                }
                 //.ConvertAll<string>(s => s.PathologyName);
 
                 ICollection<string> fromDB = currentDB.Except(input.symptoms).ToList();
@@ -2565,7 +2710,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "WHERE Symptom = {0} " +
                                 "AND Pathology = {1}"
                                 , path
-                                , string.IsNullOrEmpty(input.name) ? name : input.name);
+                                , pathNameRef);
                         }
                         catch (SqlException sqlException)
                         {
@@ -2618,7 +2763,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "{0}," +
                                 "{1})"
                                 , path
-                                , string.IsNullOrEmpty(input.name) ? name : input.name);
+                                , pathNameRef);
                         }
                         catch (SqlException sqlException)
                         {
@@ -2678,7 +2823,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "AND Pathology = {2}"
                                 , path.Item2
                                 , path.Item1
-                                , string.IsNullOrEmpty(input.name) ? name : input.name);
+                                , pathNameRef);
                         }
                         catch (SqlException sqlException)
                         {
@@ -2751,7 +2896,7 @@ namespace CoTEC_Server.Logic.GraphQL
                 .FirstOrDefaultAsync();
 
                 int rows = await dBContext.Database.ExecuteSqlRawAsync(
-                    "DELETE FROM healthcare.Pathology " +
+                    "DELETE FROM admin.Pathology " +
                     "WHERE Name = {0}", name);
 
                 if (rows < 1)
@@ -2797,6 +2942,317 @@ namespace CoTEC_Server.Logic.GraphQL
             return p;
 
         }
+
+        [GraphQLType(typeof(ContentionEventType))]
+        public async Task<ContentionMeasuresChanges> addContentionMeasureActive(
+            [Service] CoTEC_DBContext dBContext,
+            [GraphQLNonNullType] string measure,
+            [GraphQLNonNullType] DateTime startDate,
+            DateTime endDate,
+            [GraphQLNonNullType] string country)
+        {
+
+            if (string.IsNullOrEmpty(measure))
+            {
+
+                throw ErrorQueryBuilder(
+                    "MEASURE_NAME_EMPTY",
+                    "The measure name can't be empty."
+                    );
+
+            }
+
+            if (string.IsNullOrEmpty(country))
+            {
+                throw ErrorQueryBuilder(
+                    "COUNTRY_NAME_EMPTY",
+                    "The name of the country can't be empty."
+                    );
+            }
+
+            var newVisit = new ContentionMeasuresChanges
+            {
+
+                MeasureName = measure,
+                StartDate = startDate,
+                CountryName = country,
+                EndDate = endDate
+
+            };
+
+            dBContext.ContentionMeasuresChanges.Add(newVisit);
+
+            try
+            {
+                await dBContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException e)
+            {
+
+                var sqlException = e.GetBaseException() as SqlException;
+
+                if (sqlException != null)
+                {
+
+                    if (sqlException.Number.Equals(2627))
+                    {
+                        throw ErrorQueryBuilder(
+                            sqlException,
+                            "The Contention measure '{0}' in country '{1}', with start date '{2}' already exists.", measure, country, startDate);
+
+                    }
+                    else if (sqlException.Number.Equals(547))
+                    {
+
+                        throw ErrorQueryBuilder(
+                            sqlException,
+                            "The country (name: {0}) or measure (name: {1}) doesn't exists.", country, measure);
+                    }
+                    else if (sqlException.Number.Equals(2628))
+                    {
+
+                        throw ErrorQueryBuilder(
+                            sqlException,
+                            "The measure name or country specified is too long, try to use one under 80 or 100 chars long.");
+                    }
+                    else
+                    {
+                        throw ErrorQueryBuilder(
+                            sqlException,
+                            "Unknown Error");
+                    }
+
+                }
+
+
+            }
+            catch (Exception e)
+            {
+                throw new QueryException(
+                       ErrorBuilder.New()
+                           .SetMessage("Unknown error")
+                           .SetCode(e.GetType().FullName)
+                           .SetExtension("DatabaseMessage", e.Message)
+                           .Build());
+            }
+
+            return await dBContext.ContentionMeasuresChanges
+                        .Where(s => s.CountryName.Equals(country)
+                                 && s.MeasureName.Equals(measure)
+                                 && s.StartDate.Equals(startDate))
+                        .Include(s => s.CountryNameNavigation)
+                        .Include(s => s.MeasureNameNavigation)
+                        .FirstOrDefaultAsync();
+        }
+
+        [GraphQLType(typeof(ContentionEventType))]
+        public async Task<ContentionMeasuresChanges> updateContentionMeasureActive(
+            [Service] CoTEC_DBContext dBContext,
+            [GraphQLNonNullType] string measure,
+            [GraphQLNonNullType] DateTime startDate,
+            [GraphQLNonNullType] string country,
+            [GraphQLNonNullType] UpdateContentionEvent input)
+        {
+
+            if (string.IsNullOrEmpty(measure))
+            {
+
+                throw ErrorQueryBuilder(
+                    "MEASURE_NAME_EMPTY",
+                    "The measure name can't be empty."
+                    );
+
+            }
+
+            if (string.IsNullOrEmpty(country))
+            {
+                throw ErrorQueryBuilder(
+                    "COUNTRY_NAME_EMPTY",
+                    "The name of the country can't be empty."
+                    );
+            }
+
+            if (string.IsNullOrEmpty(input.country)
+                && string.IsNullOrEmpty(input.measure)
+                && input.startDate.HasValue
+                && input.endDate.HasValue)
+            {
+                throw ErrorQueryBuilder(
+                    "NO_CHANGES_AVAILABLE",
+                    "Nothing to change.");
+            }
+
+            try
+            {
+                int rows = await dBContext.Database.ExecuteSqlRawAsync(
+                    "UPDATE user_public.Contention_Measures_Changes " +
+                    "SET country_Name = (CASE" +
+                                    " WHEN {0} is null THEN country_Name " +
+                                    " ELSE {0} END), " +
+                    "Measure_Name = (CASE" +
+                                    " WHEN {1} is null THEN Measure_Name " +
+                                    " ELSE {1} END), " +
+                    "Start_date = (CASE" +
+                                    " WHEN {2} is null THEN Start_date " +
+                                    " ELSE {2} END), " +
+                    "End_date = (CASE" +
+                                    " WHEN {3} is null THEN End_date " +
+                                    " ELSE {3} END) " +
+                    "WHERE Measure_Name = {4} AND Start_date = {5} AND country_Name = {6}",
+                    string.IsNullOrEmpty(input.country) ? null : input.country,
+                    string.IsNullOrEmpty(input.measure) ? null : input.measure,
+                    input.startDate.HasValue ? input.startDate : null,
+                    input.endDate.HasValue ? input.endDate : null,
+                    measure, startDate, country);
+
+                if (rows < 1)
+                {
+                    throw ErrorQueryBuilder(
+                        "MEASURE_NOT_FOUND",
+                        "The Contention event with name '{0}', in country '{1}' and start date '{2}' doesn't exists.", measure, country, startDate);
+                }
+            }
+
+            catch (SqlException sqlException)
+            {
+                if (sqlException.Number.Equals(2627))
+                {
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        "The Contention event with name '{0}', in country '{1}' and start date '{2}' already exists.", input.measure, input.country, input.startDate);
+
+                }
+                else if (sqlException.Number.Equals(547))
+                {
+
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        "The country (name: {0}) or measure (name: {1}) doesn't exists.", input.country, input.measure);
+                }
+                else if (sqlException.Number.Equals(2628))
+                {
+
+                    throw ErrorQueryBuilder(
+                            sqlException,
+                            "The measure name or country specified is too long, try to use one under 80 or 100 chars long.");
+                }
+                else
+                {
+                    throw ErrorQueryBuilder(
+                            sqlException,
+                            "Unknown error.");
+                }
+
+            }
+            catch (QueryException e)
+            {
+                throw e;
+            }
+
+            catch (Exception e)
+            {
+                throw new QueryException(
+                       ErrorBuilder.New()
+                           .SetMessage("Unknown error")
+                           .SetCode(e.GetType().FullName)
+                           .SetExtension("DatabaseMessage", e.Message)
+                           .Build());
+            }
+
+            return await dBContext.ContentionMeasuresChanges
+                        .Where(s => s.CountryName.Equals(string.IsNullOrEmpty(input.country) ? country : input.country)
+                                 && s.MeasureName.Equals(string.IsNullOrEmpty(input.measure) ? measure : input.measure)
+                                 && s.StartDate.Equals(input.startDate.HasValue ? input.startDate : startDate))
+                        .Include(s => s.CountryNameNavigation)
+                        .Include(s => s.MeasureNameNavigation)
+                        .FirstOrDefaultAsync();
+        }
+
+        [GraphQLType(typeof(ContentionEventType))]
+        public async Task<ContentionMeasuresChanges> deleteContentionMeasureActive(
+            [Service] CoTEC_DBContext dBContext,
+            [GraphQLNonNullType] string measure,
+            [GraphQLNonNullType] DateTime startDate,
+            [GraphQLNonNullType] string country)
+        {
+
+            ContentionMeasuresChanges p;
+
+            if (string.IsNullOrEmpty(measure))
+            {
+
+                throw ErrorQueryBuilder(
+                    "MEASURE_NAME_EMPTY",
+                    "The measure name can't be empty."
+                    );
+
+            }
+
+            if (string.IsNullOrEmpty(country))
+            {
+                throw ErrorQueryBuilder(
+                    "COUNTRY_NAME_EMPTY",
+                    "The name of the country can't be empty."
+                    );
+            }
+
+            try
+            {
+                p = await dBContext.ContentionMeasuresChanges
+                        .Where(s => s.CountryName.Equals(country)
+                                 && s.MeasureName.Equals(measure)
+                                 && s.StartDate.Equals(startDate))
+                        .Include(s => s.CountryNameNavigation)
+                        .Include(s => s.MeasureNameNavigation)
+                        .FirstOrDefaultAsync();
+
+                int rows = await dBContext.Database.ExecuteSqlRawAsync(
+                    "DELETE FROM user_public.Contention_Measures_Changes " +
+                    "WHERE Measure_Name = {0} AND country_Name = {1} AND Start_Date = {2}", measure, country, startDate);
+
+                if (rows < 1)
+                {
+                    throw ErrorQueryBuilder(
+                        "MEASURE_NOT_FOUND",
+                        "The event with name '{0}', in country '{1}' and start date '{2}' doesn't exists.", measure, country, startDate);
+                }
+            }
+            catch (SqlException sqlException)
+            {
+                if (sqlException.Number.Equals(2628))
+                {
+
+                    throw ErrorQueryBuilder(
+                            sqlException,
+                            "The measure name or country specified is too long, try to use one under 80 or 100 chars long.");
+                }
+                else
+                {
+                    throw ErrorQueryBuilder(
+                            sqlException,
+                            "Unknown error.");
+                }
+
+            }
+            catch (QueryException e)
+            {
+                throw e;
+            }
+
+            catch (Exception e)
+            {
+                throw new QueryException(
+                       ErrorBuilder.New()
+                           .SetMessage("Unknown error")
+                           .SetCode(e.GetType().FullName)
+                           .SetExtension("DatabaseMessage", e.Message)
+                           .Build());
+            }
+
+            return p;
+
+        }
+
 
         [GraphQLType(typeof(SanitaryEventType))]
         public async Task<SanitaryMeasuresChanges> addSanitaryMeasureActive(
@@ -2893,7 +3349,7 @@ namespace CoTEC_Server.Logic.GraphQL
 
             return await dBContext.SanitaryMeasuresChanges
                         .Where(s => s.CountryName.Equals(country)
-                                 && s.MeasureName.Equals(measure) 
+                                 && s.MeasureName.Equals(measure)
                                  && s.StartDate.Equals(startDate))
                         .Include(s => s.CountryNameNavigation)
                         .Include(s => s.MeasureNameNavigation)
@@ -2927,9 +3383,9 @@ namespace CoTEC_Server.Logic.GraphQL
                     );
             }
 
-            if (string.IsNullOrEmpty(input.country) 
-                && string.IsNullOrEmpty(input.measure) 
-                && input.startDate.HasValue 
+            if (string.IsNullOrEmpty(input.country)
+                && string.IsNullOrEmpty(input.measure)
+                && input.startDate.HasValue
                 && input.endDate.HasValue)
             {
                 throw ErrorQueryBuilder(
@@ -2940,7 +3396,7 @@ namespace CoTEC_Server.Logic.GraphQL
             try
             {
                 int rows = await dBContext.Database.ExecuteSqlRawAsync(
-                    "UPDATE healthcare.Sanitary_Measures_Changes " +
+                    "UPDATE user_public.Sanitary_Measures_Changes " +
                     "SET country_Name = (CASE" +
                                     " WHEN {0} is null THEN country_Name " +
                                     " ELSE {0} END), " +
@@ -2974,7 +3430,7 @@ namespace CoTEC_Server.Logic.GraphQL
                 {
                     throw ErrorQueryBuilder(
                         sqlException,
-                        "The Sanitary event with name '{0}', in country '{1}' and start date '{2}' already exists.", input.measure, input.country, input.startDate);
+                        "The event with name '{0}', in country '{1}' and start date '{2}' already exists.", input.measure, input.country, input.startDate);
 
                 }
                 else if (sqlException.Number.Equals(547))
@@ -3062,14 +3518,14 @@ namespace CoTEC_Server.Logic.GraphQL
                         .FirstOrDefaultAsync();
 
                 int rows = await dBContext.Database.ExecuteSqlRawAsync(
-                    "DELETE FROM healthcare.Sanitary_Measures_Changes " +
+                    "DELETE FROM user_public.Sanitary_Measures_Changes " +
                     "WHERE Measure_Name = {0} AND country_Name = {1} AND Start_Date = {2}", measure, country, startDate);
 
                 if (rows < 1)
                 {
                     throw ErrorQueryBuilder(
                         "MEASURE_NOT_FOUND",
-                        "The Sanitary event with name '{0}', in country '{1}' and start date '{2}' doesn't exists.", measure, country, startDate);
+                        "The event with name '{0}', in country '{1}' and start date '{2}' doesn't exists.", measure, country, startDate);
                 }
             }
             catch (SqlException sqlException)
@@ -3187,7 +3643,7 @@ namespace CoTEC_Server.Logic.GraphQL
                     " @country = {4}," +
                     " @age = {5}," +
                     " @address = {6}," +
-                    " @email = {7}" +
+                    " @email = {7}," +
                     " @nationality = {8}",
                     input.identification,
                     string.IsNullOrEmpty(input.firstName) ? null : input.firstName,
@@ -3307,6 +3763,8 @@ namespace CoTEC_Server.Logic.GraphQL
 
             List<IError> errors = new List<IError>();
 
+            bool contactUpdated = true;
+
             try
             {
                 int rows = await dBContext.Database.ExecuteSqlRawAsync(
@@ -3321,24 +3779,24 @@ namespace CoTEC_Server.Logic.GraphQL
                                     " WHEN {2} is null THEN lastName " +
                                     " ELSE {2} END), " +
                     "region = (CASE" +
-                                    " WHEN {2} is null THEN region " +
-                                    " ELSE {2} END), " +
+                                    " WHEN {3} is null THEN region " +
+                                    " ELSE {3} END), " +
                     "nationality = (CASE" +
-                                    " WHEN {2} is null THEN nationality " +
-                                    " ELSE {2} END), " +
+                                    " WHEN {4} is null THEN nationality " +
+                                    " ELSE {4} END), " +
                     "country = (CASE" +
-                                    " WHEN {2} is null THEN country " +
-                                    " ELSE {2} END), " +
+                                    " WHEN {5} is null THEN country " +
+                                    " ELSE {5} END), " +
                     "address = (CASE" +
-                                    " WHEN {2} is null THEN address " +
-                                    " ELSE {2} END), " +
+                                    " WHEN {6} is null THEN address " +
+                                    " ELSE {6} END), " +
                     "age = (CASE" +
-                                    " WHEN {2} is null THEN age " +
-                                    " ELSE {2} END), " +
+                                    " WHEN {7} is null THEN age " +
+                                    " ELSE {7} END), " +
                     "email = (CASE" +
-                                    " WHEN {3} is null THEN email " +
-                                    " ELSE {3} END) " +
-                    "WHERE identification = {4}",
+                                    " WHEN {8} is null THEN email " +
+                                    " ELSE {8} END) " +
+                    "WHERE identification = {9}",
                     string.IsNullOrEmpty(input.identification) ? null : input.identification,
                     string.IsNullOrEmpty(input.firstName) ? null : input.firstName,
                     string.IsNullOrEmpty(input.lastName) ? null : input.lastName,
@@ -3348,8 +3806,6 @@ namespace CoTEC_Server.Logic.GraphQL
                     string.IsNullOrEmpty(input.address) ? null : input.address,
                     input.age.HasValue ? input.age : null,
                     string.IsNullOrEmpty(input.email) ? null : input.email,
-                    string.IsNullOrEmpty(input.address) ? null : input.address,
-                    string.IsNullOrEmpty(input.email) ? null : input.email,
                     identification);
 
                 if (rows < 1)
@@ -3357,8 +3813,7 @@ namespace CoTEC_Server.Logic.GraphQL
                     throw ErrorQueryBuilder(
                         "NOTHING_TO_CHANGE",
                         "The identification code '{0}' doesn't match any contact."
-                        , identification
-                        );
+                        , identification);
                 }
             }
 
@@ -3371,18 +3826,21 @@ namespace CoTEC_Server.Logic.GraphQL
                             "You tried to change the identification code of contact with a related pathology, patient or hospital. " +
                             "Please delete all elements related before updating this patient. " +
                             "¿Or maybe you inserted the wrong country, or region?"));
+                    contactUpdated = false;
                 }
                 else if (e.Number.Equals(2627))
                 {
                     errors.Add(CustomErrorBuilder(
                             e,
                             "You tried to insert an identification code that already exists."));
+                    contactUpdated = false;
                 }
                 else
                 {
                     errors.Add(CustomErrorBuilder(
                             e,
                             "Unknown error."));
+                    contactUpdated = false;
                 }
 
             }
@@ -3397,6 +3855,7 @@ namespace CoTEC_Server.Logic.GraphQL
                            .SetCode(e.GetType().FullName)
                            .SetExtension("DatabaseMessage", e.Message)
                            .Build());
+                contactUpdated = false;
             }
 
             if (input.pathologies != null)
@@ -3408,11 +3867,26 @@ namespace CoTEC_Server.Logic.GraphQL
                 dbPath - input = 0 & dbPath.Count < input.Count => insert input => loop with errors
                 dbPath - input > 0 & dbPath.Count = input.Count => updatePatient dbPath*/
 
+                ICollection<string> currentDB;
 
-                ICollection<string> currentDB = dBContext.ContactPathology
-                    .Where(p => p.ContactId.Equals(string.IsNullOrEmpty(input.identification) ? identification : input.identification))
+                string pathIdentificationref;
+
+                if (contactUpdated && !string.IsNullOrEmpty(input.identification))
+                {
+                    currentDB = dBContext.ContactPathology
+                    .Where(p => p.ContactId.Equals(input.identification))
                     .Select(s => new string(s.PathologyName))
                     .ToList();
+                    pathIdentificationref = input.identification;
+                } else
+                {
+                    currentDB = dBContext.ContactPathology
+                    .Where(p => p.ContactId.Equals(identification))
+                    .Select(s => new string(s.PathologyName))
+                    .ToList();
+                    pathIdentificationref = identification;
+                }
+
                 //.ConvertAll<string>(s => s.PathologyName);
 
                 ICollection<string> fromDB = currentDB.Except(input.pathologies).ToList();
@@ -3431,7 +3905,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "WHERE Pathology_Name = {0} " +
                                 "AND Contact_Id = {1}"
                                 , path
-                                , string.IsNullOrEmpty(input.identification) ? identification : input.identification);
+                                , pathIdentificationref);
                         }
                         catch (SqlException sqlException)
                         {
@@ -3484,7 +3958,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "{0}," +
                                 "{1})"
                                 , path
-                                , string.IsNullOrEmpty(input.identification) ? identification : input.identification);
+                                , pathIdentificationref);
                         }
                         catch (SqlException sqlException)
                         {
@@ -3544,7 +4018,7 @@ namespace CoTEC_Server.Logic.GraphQL
                                 "AND Contact_Id = {2}"
                                 , path.Item2
                                 , path.Item1
-                                , string.IsNullOrEmpty(input.identification) ? identification : input.identification);
+                                , pathIdentificationref);
                         }
                         catch (SqlException sqlException)
                         {
@@ -3722,40 +4196,6 @@ namespace CoTEC_Server.Logic.GraphQL
                     input.capacity,
                     input.totalICUBeds,
                     input.directorContact);
-                /*if (!string.IsNullOrEmpty(input.description) && string.IsNullOrEmpty(input.treatment))
-                {
-                    
-                }
-                else if (!string.IsNullOrEmpty(input.treatment) && string.IsNullOrEmpty(input.description))
-                {
-                    await dBContext.Database.ExecuteSqlRawAsync(
-                    "INSERT INTO admin.Pathology ([name], [treatment]) " +
-                    "VALUES (" +
-                    "{0}," +
-                    "{1})",
-                    input.name,
-                    input.treatment);
-                }
-                else if (!string.IsNullOrEmpty(input.treatment) && !string.IsNullOrEmpty(input.description))
-                {
-                    await dBContext.Database.ExecuteSqlRawAsync(
-                    "INSERT INTO admin.Pathology ([name], [treatment], [description]) " +
-                    "VALUES (" +
-                    "{0}," +
-                    "{1}," +
-                    "{2})",
-                    input.name,
-                    input.treatment,
-                    input.description);
-                }
-                else
-                {
-                    await dBContext.Database.ExecuteSqlRawAsync(
-                    "INSERT INTO admin.Pathology ([name]) " +
-                    "VALUES (" +
-                    "{0})",
-                    input.name);
-                }*/
             }
             catch (SqlException sqlException)
             {
@@ -3842,12 +4282,13 @@ namespace CoTEC_Server.Logic.GraphQL
                                     " WHEN {5} is null THEN Manager " +
                                     " ELSE {5} END), " +
                     "WHERE Name = {6}, country = {7}, region = {8}",
-                    string.IsNullOrEmpty(input.name.Trim()) ? null : input.name.Trim(),
+                    string.IsNullOrEmpty(input.name) ? null : input.name,
                     string.IsNullOrEmpty(input.region) ? null : input.region,
                     string.IsNullOrEmpty(input.country) ? null : input.country,
                     input.capacity.HasValue ? input.capacity : null,
                     input.totalICUBeds.HasValue ? input.capacity : null,
-                    string.IsNullOrEmpty(input.directorContact) ? null : input.directorContact);
+                    string.IsNullOrEmpty(input.directorContact) ? null : input.directorContact,
+                    name, country, region);
 
                 if (rows < 1)
                 {
@@ -4002,5 +4443,471 @@ namespace CoTEC_Server.Logic.GraphQL
             return p;
 
         }
+
+        [GraphQLType(typeof(HospitalWorkerType))]
+        public async Task<Staff> addHospitalWorker(
+            [Service] CoTEC_DBContext dBContext,
+            [GraphQLNonNullType] string idCode,
+            [GraphQLNonNullType] string firstName,
+            [GraphQLNonNullType] string lastName,
+            [GraphQLNonNullType] string password,
+            [GraphQLNonNullType] string hospitalName,
+            [GraphQLNonNullType] string hospitalRegion,
+            [GraphQLNonNullType] string hospitalCountry)
+        {
+
+            if (string.IsNullOrEmpty(idCode) ||
+                string.IsNullOrEmpty(firstName) ||
+                string.IsNullOrEmpty(lastName) ||
+                string.IsNullOrEmpty(password) ||
+                string.IsNullOrEmpty(hospitalName) ||
+                string.IsNullOrEmpty(hospitalRegion) ||
+                string.IsNullOrEmpty(hospitalCountry))
+            {
+                throw ErrorQueryBuilder(
+                    "VALUE_EMPTY",
+                    "You must provide all the values."
+                    );
+            }
+
+            var hospital = await dBContext.Hospital
+                .Where(s => s.Name.Equals(hospitalName.Trim()) &&
+                            s.Region.Equals(hospitalRegion.Trim()) &&
+                            s.Country.Equals(hospitalCountry.Trim()))
+                .FirstOrDefaultAsync();
+
+            if (hospital is null)
+            {
+                throw ErrorQueryBuilder(
+                    "INVALID_HOSPITAL",
+                    "You must provide a valid hospital."
+                    );
+            }
+                
+
+
+            try
+            {
+                await dBContext.Database.ExecuteSqlRawAsync(
+                    "INSERT INTO admin.Staff " +
+                    "(Id_Code," +
+                    "firstName," +
+                    "lastName," +
+                    "Password," +
+                    "Role) " +
+                    "VALUES (" +
+                    "{0}," +
+                    "{1}," +
+                    "{2}," +
+                    "{3}," +
+                    "{4})",
+                    idCode,
+                    firstName,
+                    lastName,
+                    password,
+                    "hospitalworker");
+
+                await dBContext.Database.ExecuteSqlRawAsync(
+                    "INSERT INTO admin.Hospital_Workers " +
+                    "(Id_Code," +
+                    "Name," +
+                    "region," +
+                    "country) " +
+                    "VALUES (" +
+                    "{0}," +
+                    "{1}," +
+                    "{2}," +
+                    "{3})",
+                    idCode,
+                    hospitalName,
+                    hospitalRegion,
+                    hospitalCountry);
+            }
+            catch (SqlException sqlException)
+            {
+                if (sqlException.Number.Equals(2627))
+                {
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        "The hospital worker with identification '{0}' already exists.", idCode);
+
+                }
+                else if (sqlException.Number.Equals(2628))
+                {
+
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        "The identification specified is too long, try to use one under 50 chars long.");
+                }
+                else if (sqlException.Number.Equals(515))
+                {
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        "You must enter a value for all fields.");
+                }
+                else if (sqlException.Number.Equals(50006))
+                {
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        sqlException.Message);
+                }
+                else
+                {
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        "Unknown Error");
+                }
+
+            }
+            catch (Exception e)
+            {
+                throw new QueryException(
+                       ErrorBuilder.New()
+                           .SetMessage("Unknown error")
+                           .SetCode(e.GetType().FullName)
+                           .SetExtension("DatabaseMessage", e.Message)
+                           .Build());
+            }
+
+            return await dBContext.Staff
+                .Where(s => s.Role.Equals("hospitalworker") && s.IdCode.Equals(idCode))
+                .FirstOrDefaultAsync();
+        }
+
+        [GraphQLType(typeof(HospitalWorkerType))]
+        public async Task<Staff> updateHospitalWorker(
+            [Service] CoTEC_DBContext dBContext,
+            [GraphQLNonNullType] string oldIdentification,
+            string newIdentification,
+            string firstName,
+            string lastName,
+            string password)
+        {
+
+            List<IError> errors = new List<IError>();
+
+            try
+            {
+                int rows = await dBContext.Database.ExecuteSqlRawAsync(
+                    "UPDATE admin.Staff " +
+                    "SET Id_Code = (CASE" +
+                                    " WHEN {0} is null THEN Id_Code " +
+                                    " ELSE {0} END), " +
+                    "firstName = (CASE" +
+                                    " WHEN {1} is null THEN firstName " +
+                                    " ELSE {1} END), " +
+                    "lastName = (CASE" +
+                                    " WHEN {2} is null THEN lastName " +
+                                    " ELSE {2} END), " +
+                    "Password = (CASE" +
+                                    " WHEN {3} is null THEN Password " +
+                                    " ELSE {3} END) " +
+                    "WHERE Id_Code = {4}",
+                    string.IsNullOrEmpty(newIdentification) ? null : newIdentification,
+                    string.IsNullOrEmpty(firstName) ? null : firstName,
+                    string.IsNullOrEmpty(lastName) ? null : lastName,
+                    string.IsNullOrEmpty(password) ? null : password,
+                    oldIdentification);
+
+                if (rows < 1)
+                {
+                    throw ErrorQueryBuilder(
+                        "NOTHING_TO_CHANGE",
+                        "The identification code '{0}' doesn't match any worker."
+                        , oldIdentification
+                        );
+                }
+            }
+
+            catch (SqlException e)
+            {
+                if (e.Number.Equals(547))
+                {
+                    errors.Add(CustomErrorBuilder(
+                            e,
+                            "You tried to change the identification code of a worker with a related hospital. " +
+                            "Please delete all elements related before deleting this patient. "));
+                }
+                else if (e.Number.Equals(2627))
+                {
+                    errors.Add(CustomErrorBuilder(
+                            e,
+                            "You tried to insert an identification code that already exists."));
+                }
+                else
+                {
+                    errors.Add(CustomErrorBuilder(
+                            e,
+                            "Unknown error."));
+                }
+
+            }
+            catch (QueryException e)
+            {
+                throw e;
+            }
+            catch (Exception e)
+            {
+                throw new QueryException(ErrorBuilder.New()
+                           .SetMessage("Unknown error")
+                           .SetCode(e.GetType().FullName)
+                           .SetExtension("DatabaseMessage", e.Message)
+                           .Build());
+            }
+
+
+            if (errors.Count > 0)
+            {
+                throw new QueryException(errors.AsEnumerable());
+            }
+
+            return await dBContext.Staff
+                .Where(s => s.Role.Equals("hospitalworker") && s.IdCode.Equals(string.IsNullOrEmpty(newIdentification) ? oldIdentification : newIdentification))
+                .FirstOrDefaultAsync();
+        }
+
+
+        [GraphQLType(typeof(HospitalWorkerType))]
+        public async Task<Staff> deleteHospitalWorker(
+            [Service] CoTEC_DBContext dBContext,
+            [GraphQLNonNullType] string identification)
+        {
+            if (string.IsNullOrEmpty(identification))
+            {
+                throw ErrorQueryBuilder(
+                    "NAME_EMPTY",
+                    "The identification can't be empty.");
+            }
+            Staff p;
+
+            try
+            {
+                p = await dBContext.Staff
+                .Where(s => s.Role.Equals("hospitalworker") && s.IdCode.Equals(identification))
+                .FirstOrDefaultAsync();
+
+                int rows = await dBContext.Database.ExecuteSqlRawAsync(
+                    "DELETE FROM admin.Staff " +
+                    "WHERE Id_Code = {0}", identification);
+
+                if (rows < 1)
+                {
+                    throw ErrorQueryBuilder(
+                        "PATIENT_NOT_FOUND",
+                        "The worker with identification code '{0}' doesn't exists.", identification);
+                }
+            }
+            catch (SqlException e)
+            {
+                if (e.Number.Equals(547))
+                {
+                    throw ErrorQueryBuilder(
+                            e,
+                            "You tried to delete a patient with a related hospital. " +
+                            "Please delete all elements related before deleting this worker.");
+                }
+
+                else
+                {
+                    throw ErrorQueryBuilder(
+                            e,
+                            "Unknown error.");
+                }
+
+            }
+            catch (QueryException e)
+            {
+                throw e;
+            }
+
+            catch (Exception e)
+            {
+                throw new QueryException(
+                       ErrorBuilder.New()
+                           .SetMessage("Unknown error")
+                           .SetCode(e.GetType().FullName)
+                           .SetExtension("DatabaseMessage", e.Message)
+                           .Build());
+            }
+
+            return p;
+
+        }
+
+        [GraphQLType(typeof(BooleanType))]
+        public async Task<bool> deleteHospitalWorkerRelated(
+            [Service] CoTEC_DBContext dBContext,
+            [GraphQLNonNullType] string idCode,
+            [GraphQLNonNullType] string hospitalName,
+            [GraphQLNonNullType] string hospitalRegion,
+            [GraphQLNonNullType] string hospitalCountry)
+        {
+
+            if (string.IsNullOrEmpty(idCode) ||
+                string.IsNullOrEmpty(hospitalName) ||
+                string.IsNullOrEmpty(hospitalRegion) ||
+                string.IsNullOrEmpty(hospitalCountry))
+            {
+                throw ErrorQueryBuilder(
+                    "VALUE_EMPTY",
+                    "You must provide all the values."
+                    );
+            }
+
+
+
+            try
+            {
+                int rows = await dBContext.Database.ExecuteSqlRawAsync(
+                    "DELETE FROM admin.Hospital_Workers " +
+                    "WHERE Id_Code = {0} " +
+                    "AND Name = {1} " +
+                    "AND region = {2} " +
+                    "AND country = {3}",
+                    idCode,
+                    hospitalName,
+                    hospitalRegion,
+                    hospitalCountry);
+
+                if (rows < 1)
+                {
+                    throw ErrorQueryBuilder(
+                        "PATIENT_NOT_FOUND",
+                        "The worker or hospital specified doesn't exists.");
+                }
+
+
+            }
+            catch (SqlException sqlException)
+            {
+                if (sqlException.Number.Equals(2628))
+                {
+
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        "The identification specified is too long, try to use one under 50 chars long.");
+                }
+                else if (sqlException.Number.Equals(515))
+                {
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        "You must enter a value for all fields.");
+                }
+                else if (sqlException.Number.Equals(50006))
+                {
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        sqlException.Message);
+                }
+                else
+                {
+                    throw ErrorQueryBuilder(
+                        sqlException,
+                        "Unknown Error");
+                }
+
+            }
+            catch (QueryException e)
+            {
+                throw e;
+            }
+            catch (Exception e)
+            {
+                throw new QueryException(
+                       ErrorBuilder.New()
+                           .SetMessage("Unknown error")
+                           .SetCode(e.GetType().FullName)
+                           .SetExtension("DatabaseMessage", e.Message)
+                           .Build());
+            }
+
+            return true;
+        }
+
+
+        public async Task<DBModels.Auth> authentication(
+            [Service] CoTEC_DBContext db, 
+            [GraphQLNonNullType] string id, 
+            [GraphQLNonNullType] string password)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                throw ErrorQueryBuilder(
+                    "VALUE_EMPTY",
+                    "You must provide a user.");
+            }
+
+            if (string.IsNullOrEmpty(password))
+            {
+                throw ErrorQueryBuilder(
+                    "VALUE_EMPTY",
+                    "You must provide a password.");
+            }
+
+            var dbUser = await db.Staff.Where(s => s.IdCode.Equals(id.Trim()) && s.Password.Equals(password)).FirstOrDefaultAsync();
+
+            if (dbUser is null)
+            {
+                throw ErrorQueryBuilder(
+                    "UNAUTHORIZED",
+                    "The user or password provided are not correct");
+            }
+
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, dbUser.FirstName + " " + dbUser.LastName),
+                new Claim(Constants.RoleClaim, dbUser.Role),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            };
+
+            var key = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(Constants.key));
+
+
+            var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            JwtSecurityToken token;
+
+            if (dbUser.Role.Equals(Constants.AdminRoleName))
+            {
+                token = new JwtSecurityToken(
+                issuer: Constants.Issuer,
+                claims: claims,
+                notBefore: DateTime.Now,
+                expires: DateTime.Now.AddHours(Constants.AdminExpireTimeHours),
+                signingCredentials: signingCredentials);
+
+            }
+            else if (dbUser.Role.Equals(Constants.HealthCenterRoleName))
+            {
+                token = new JwtSecurityToken(
+                issuer: Constants.Issuer,
+                claims: claims,
+                notBefore: DateTime.Now,
+                expires: DateTime.Now.AddHours(Constants.HospitalWorkerExpireTimeHours),
+                signingCredentials: signingCredentials);
+            }
+            else
+            {
+                StringBuilder s = new StringBuilder();
+                s.AppendFormat("User role ({0}) is not recognized", dbUser.Role);
+                throw ErrorQueryBuilder(
+                    "UNAUTHORIZED",
+                    "User role ({0}) is not recognized", dbUser.Role);
+            }
+
+
+            var tokenR = new JwtSecurityTokenHandler().WriteToken(token);
+
+            return new DBModels.Auth
+            {
+                accessKey = tokenR,
+                role = dbUser.Role
+            };
+
+
+        }
+
+
     }
 }

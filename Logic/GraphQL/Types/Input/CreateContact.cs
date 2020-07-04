@@ -3,8 +3,12 @@ using System.Collections.Generic;
 
 namespace CoTEC_Server.Logic.GraphQL.Types.Input
 {
+    /// <summary>
+    /// This class handle the information to create contacts
+    /// </summary>
     public class CreateContact
     {
+
         [GraphQLNonNullType]
         public string firstName { get; set; }
         [GraphQLNonNullType]
@@ -19,6 +23,9 @@ namespace CoTEC_Server.Logic.GraphQL.Types.Input
         public string region { get; set; }
         [GraphQLNonNullType]
         public string country { get; set; }
+        /// <summary>
+        /// This is a list of the pathology related names.
+        /// </summary>
         [GraphQLNonNullType(IsElementNullable = false, IsNullable = true)]
         public ICollection<string> pathologies { get; set; }
         [GraphQLNonNullType]

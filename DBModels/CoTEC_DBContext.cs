@@ -56,7 +56,7 @@ namespace CoTEC_Server.DBModels
             modelBuilder.Entity<Contact>(entity =>
             {
                 entity.HasKey(e => e.Identification)
-                    .HasName("PK__Contact__AAA7C1F49EE13F29");
+                    .HasName("PK_Contact_CoTEC");
 
                 entity.ToTable("Contact", "healthcare");
 
@@ -114,13 +114,13 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.Contact)
                     .HasForeignKey(d => new { d.Region, d.Country })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Contact__4D94879B");
+                    .HasConstraintName("FK__Contact_Region__CoTEC");
             });
 
             modelBuilder.Entity<ContactPathology>(entity =>
             {
                 entity.HasKey(e => new { e.ContactId, e.PathologyName })
-                    .HasName("PK__Contact___C105FEF9F9FE16D7");
+                    .HasName("PK_Contact_Pathology_CoTEC");
 
                 entity.ToTable("Contact_Pathology", "healthcare");
 
@@ -137,19 +137,19 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.ContactPathology)
                     .HasForeignKey(d => d.ContactId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Contact_P__Conta__6B24EA82");
+                    .HasConstraintName("FK__ContactPathology_Contact__CoTEC");
 
                 entity.HasOne(d => d.PathologyNameNavigation)
                     .WithMany(p => p.ContactPathology)
                     .HasForeignKey(d => d.PathologyName)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Contact_P__Patho__6C190EBB");
+                    .HasConstraintName("FK__ContactPathology_Pathology__CoTEC");
             });
 
             modelBuilder.Entity<ContentionMeasure>(entity =>
             {
                 entity.HasKey(e => e.Name)
-                    .HasName("PK__Contenti__737584F7ADB306A4");
+                    .HasName("PK_Contention_Measure_CoTEC");
 
                 entity.ToTable("Contention_Measure");
 
@@ -166,7 +166,7 @@ namespace CoTEC_Server.DBModels
             modelBuilder.Entity<ContentionMeasuresChanges>(entity =>
             {
                 entity.HasKey(e => new { e.MeasureName, e.CountryName, e.StartDate })
-                    .HasName("PK__Contenti__13203753EFF34C89");
+                    .HasName("PK_Contention_Measure_Changes_CoTEC");
 
                 entity.ToTable("Contention_Measures_Changes", "user_public");
 
@@ -192,19 +192,19 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.ContentionMeasuresChanges)
                     .HasForeignKey(d => d.CountryName)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Contentio__count__35BCFE0A");
+                    .HasConstraintName("FK__ContentionMeasureChanges_Country__CoTEC");
 
                 entity.HasOne(d => d.MeasureNameNavigation)
                     .WithMany(p => p.ContentionMeasuresChanges)
                     .HasForeignKey(d => d.MeasureName)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Contentio__Measu__36B12243");
+                    .HasConstraintName("FK__ContentionMeasureChanges_ContentionMeasure__CoTEC");
             });
 
             modelBuilder.Entity<Continent>(entity =>
             {
                 entity.HasKey(e => e.Name)
-                    .HasName("PK__Continen__737584F7EE433B23");
+                    .HasName("PK_Continent_CoTEC");
 
                 entity.Property(e => e.Name)
                     .HasMaxLength(100)
@@ -214,7 +214,7 @@ namespace CoTEC_Server.DBModels
             modelBuilder.Entity<Country>(entity =>
             {
                 entity.HasKey(e => e.Name)
-                    .HasName("PK__country__737584F74F3365E7");
+                    .HasName("PK_Country_CoTEC");
 
                 entity.ToTable("country");
 
@@ -229,13 +229,13 @@ namespace CoTEC_Server.DBModels
                 entity.HasOne(d => d.ContinentNavigation)
                     .WithMany(p => p.Country)
                     .HasForeignKey(d => d.Continent)
-                    .HasConstraintName("FK__country__Contine__267ABA7A");
+                    .HasConstraintName("FK__Country_Continent__CoTEC");
             });
 
             modelBuilder.Entity<Hospital>(entity =>
             {
                 entity.HasKey(e => new { e.Name, e.Region, e.Country })
-                    .HasName("PK__Hospital__92F28AB58763A4C0");
+                    .HasName("PK_Hospital_CoTEC");
 
                 entity.Property(e => e.Name)
                     .HasMaxLength(80)
@@ -261,19 +261,19 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.Hospital)
                     .HasForeignKey(d => d.Manager)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Hospital__Manage__534D60F1");
+                    .HasConstraintName("FK__Hospital_Contact__CoTEC");
 
                 entity.HasOne(d => d.RegionNavigation)
                     .WithMany(p => p.Hospital)
                     .HasForeignKey(d => new { d.Region, d.Country })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Hospital__52593CB8");
+                    .HasConstraintName("FK__Hospital_Region__CoTEC");
             });
 
             modelBuilder.Entity<HospitalWorkers>(entity =>
             {
                 entity.HasKey(e => new { e.IdCode, e.Name, e.Region, e.Country })
-                    .HasName("PK__Hospital__E2F6565E4171624E");
+                    .HasName("PK_Hospital_Workers_CoTEC");
 
                 entity.ToTable("Hospital_Workers");
 
@@ -299,19 +299,19 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.HospitalWorkers)
                     .HasForeignKey(d => d.IdCode)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Hospital___Id_Co__5DCAEF64");
+                    .HasConstraintName("FK__HospitalWorkers_Staff__CoTEC");
 
                 entity.HasOne(d => d.Hospital)
                     .WithMany(p => p.HospitalWorkers)
                     .HasForeignKey(d => new { d.Name, d.Region, d.Country })
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Hospital_Workers__5CD6CB2B");
+                    .HasConstraintName("FK__HospitalWorkers_Hospital__CoTEC");
             });
 
             modelBuilder.Entity<Medication>(entity =>
             {
                 entity.HasKey(e => e.Medicine)
-                    .HasName("PK__Medicati__5CCC71DAF6E6E797");
+                    .HasName("PK_Medication_CoTEC");
 
                 entity.Property(e => e.Medicine)
                     .HasMaxLength(80)
@@ -326,7 +326,7 @@ namespace CoTEC_Server.DBModels
             modelBuilder.Entity<Pathology>(entity =>
             {
                 entity.HasKey(e => e.Name)
-                    .HasName("PK__Patholog__737584F7F741FADA");
+                    .HasName("PK_Pathology_CoTEC");
 
                 entity.Property(e => e.Name)
                     .HasMaxLength(150)
@@ -346,7 +346,7 @@ namespace CoTEC_Server.DBModels
             modelBuilder.Entity<PathologySymptoms>(entity =>
             {
                 entity.HasKey(e => new { e.Pathology, e.Symptom })
-                    .HasName("PK__Patholog__CFE9B724779EB169");
+                    .HasName("PK_Pathology_Symptoms_CoTEC");
 
                 entity.ToTable("Pathology_Symptoms");
 
@@ -362,13 +362,13 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.PathologySymptoms)
                     .HasForeignKey(d => d.Pathology)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Pathology__Patho__68487DD7");
+                    .HasConstraintName("FK__PathologySymptoms_Pathology__CoTEC");
             });
 
             modelBuilder.Entity<Patient>(entity =>
             {
                 entity.HasKey(e => e.Identification)
-                    .HasName("PK__Patient__AAA7C1F4CA35E522");
+                    .HasName("PK_Patient_CoTEC");
 
                 entity.ToTable("Patient", "healthcare");
 
@@ -405,10 +405,10 @@ namespace CoTEC_Server.DBModels
                     .IsUnicode(false);
 
                 entity.Property(e => e.Nationality)
-                    .IsRequired()
                     .HasColumnName("nationality")
                     .HasMaxLength(100)
-                    .IsUnicode(false);
+                    .IsUnicode(false)
+                    .HasDefaultValueSql("('No nationality')");
 
                 entity.Property(e => e.Region)
                     .HasColumnName("region")
@@ -425,19 +425,18 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.Patient)
                     .HasForeignKey(d => d.State)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Patient__state__59FA5E80");
+                    .HasConstraintName("FK__Patient_PatientState__CoTEC");
 
                 entity.HasOne(d => d.RegionNavigation)
                     .WithMany(p => p.Patient)
                     .HasForeignKey(d => new { d.Region, d.Country })
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Patient__59063A47");
+                    .HasConstraintName("FK__Patient_Region__CoTEC");
             });
 
             modelBuilder.Entity<PatientContact>(entity =>
             {
                 entity.HasKey(e => new { e.ContactId, e.PatientId, e.LastVisit })
-                    .HasName("PK__Patient___DA4E0F4091713AE2");
+                    .HasName("PK_Patient_Contact_CoTEC");
 
                 entity.ToTable("Patient_Contact", "healthcare");
 
@@ -458,19 +457,19 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.PatientContact)
                     .HasForeignKey(d => d.ContactId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Patient_C__Conta__6FE99F9F");
+                    .HasConstraintName("FK__PatientContact_Contact__CoTEC");
 
                 entity.HasOne(d => d.Patient)
                     .WithMany(p => p.PatientContact)
                     .HasForeignKey(d => d.PatientId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Patient_C__Patie__70DDC3D8");
+                    .HasConstraintName("FK__PatientContact_Patient__CoTEC");
             });
 
             modelBuilder.Entity<PatientMedication>(entity =>
             {
                 entity.HasKey(e => new { e.PatientId, e.Medication })
-                    .HasName("PK__Patient___3A269A75712302A3");
+                    .HasName("PK_Patient_Medication_CoTEC");
 
                 entity.ToTable("Patient_Medication", "healthcare");
 
@@ -486,19 +485,19 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.PatientMedication)
                     .HasForeignKey(d => d.Medication)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Patient_M__Medic__619B8048");
+                    .HasConstraintName("FK__PatientMedication_Medication__CoTEC");
 
                 entity.HasOne(d => d.Patient)
                     .WithMany(p => p.PatientMedication)
                     .HasForeignKey(d => d.PatientId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Patient_M__Patie__60A75C0F");
+                    .HasConstraintName("FK__PatientMedication_Patient__CoTEC");
             });
 
             modelBuilder.Entity<PatientPathology>(entity =>
             {
                 entity.HasKey(e => new { e.PathologyName, e.PatientId })
-                    .HasName("PK__Patient___16218E9974B70606");
+                    .HasName("PK_Patient_Pathology_CoTEC");
 
                 entity.ToTable("Patient_Pathology", "healthcare");
 
@@ -515,19 +514,19 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.PatientPathology)
                     .HasForeignKey(d => d.PathologyName)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Patient_P__Patho__656C112C");
+                    .HasConstraintName("FK__PatientPathology_Pathology__CoTEC");
 
                 entity.HasOne(d => d.Patient)
                     .WithMany(p => p.PatientPathology)
                     .HasForeignKey(d => d.PatientId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Patient_P__Patie__6477ECF3");
+                    .HasConstraintName("FK__PatientPathology_Patient__CoTEC");
             });
 
             modelBuilder.Entity<PatientState>(entity =>
             {
                 entity.HasKey(e => e.Name)
-                    .HasName("PK__Patient___72E12F1A2F4562E6");
+                    .HasName("PK_Patient_State_CoTEC");
 
                 entity.ToTable("Patient_State");
 
@@ -540,7 +539,7 @@ namespace CoTEC_Server.DBModels
             modelBuilder.Entity<Population>(entity =>
             {
                 entity.HasKey(e => new { e.Day, e.CountryName })
-                    .HasName("PK__Populati__757140EFFCBE52F6");
+                    .HasName("PK_Population_CoTEC");
 
                 entity.ToTable("Population", "user_public");
 
@@ -559,13 +558,13 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.Population)
                     .HasForeignKey(d => d.CountryName)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Populatio__count__300424B4");
+                    .HasConstraintName("FK__Population__CoTEC");
             });
 
             modelBuilder.Entity<Region>(entity =>
             {
                 entity.HasKey(e => new { e.Name, e.Country })
-                    .HasName("PK__region__11F6C9DDF7CED572");
+                    .HasName("PK_Region_CoTEC");
 
                 entity.ToTable("region");
 
@@ -582,13 +581,13 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.Region)
                     .HasForeignKey(d => d.Country)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__region__country__29572725");
+                    .HasConstraintName("FK__Region_Country__CoTEC");
             });
 
             modelBuilder.Entity<SanitaryMeasure>(entity =>
             {
                 entity.HasKey(e => e.Name)
-                    .HasName("PK__Sanitary__737584F72E595DB1");
+                    .HasName("PK_Sanitary_Measure_CoTEC");
 
                 entity.ToTable("Sanitary_Measure");
 
@@ -605,7 +604,7 @@ namespace CoTEC_Server.DBModels
             modelBuilder.Entity<SanitaryMeasuresChanges>(entity =>
             {
                 entity.HasKey(e => new { e.MeasureName, e.CountryName, e.StartDate })
-                    .HasName("PK__Sanitary__1320375366BBB906");
+                    .HasName("PK_Sanitary_Measures_Changes_CoTEC");
 
                 entity.ToTable("Sanitary_Measures_Changes", "user_public");
 
@@ -631,19 +630,19 @@ namespace CoTEC_Server.DBModels
                     .WithMany(p => p.SanitaryMeasuresChanges)
                     .HasForeignKey(d => d.CountryName)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Sanitary___count__3C69FB99");
+                    .HasConstraintName("FK__SanitaryMeasuresChanges_Country__CoTEC");
 
                 entity.HasOne(d => d.MeasureNameNavigation)
                     .WithMany(p => p.SanitaryMeasuresChanges)
                     .HasForeignKey(d => d.MeasureName)
                     .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("FK__Sanitary___Measu__3D5E1FD2");
+                    .HasConstraintName("FK__SanitaryMeasuresChanges_SanitaryMeasure__CoTEC");
             });
 
             modelBuilder.Entity<Staff>(entity =>
             {
                 entity.HasKey(e => e.IdCode)
-                    .HasName("PK__Staff__ABD97EF5F4758948");
+                    .HasName("PK_Staff_CoTEC");
 
                 entity.Property(e => e.IdCode)
                     .HasColumnName("Id_Code")

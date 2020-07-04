@@ -2,11 +2,10 @@ using CoTEC_Server.DBModels;
 using CoTEC_Server.Logic;
 using CoTEC_Server.Logic.Auth;
 using CoTEC_Server.Logic.GraphQL;
-using DinkToPdf;
-using DinkToPdf.Contracts;
 using HotChocolate;
 using HotChocolate.AspNetCore;
 using HotChocolate.Types;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -33,31 +32,47 @@ namespace CoTEC_Server
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
             services.AddCors();
             services.AddControllers();
 
 
-            // Add DbContext
-            services
+
+            if (Environment.GetEnvironmentVariable("DigitalOceanDatabaseConn") is null)
+            {
+                services
               .AddDbContext<CoTEC_DBContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("SQLServerConnection")));
+            }
+            else
+            {
+                services
+              .AddDbContext<CoTEC_DBContext>(options =>
+                options.UseSqlServer(Environment.GetEnvironmentVariable("DigitalOceanDatabaseConn")));
+            }
 
-            services.AddAuthentication("OAuth")
-                .AddJwtBearer("OAuth", config => 
+            // Add DbContext
+
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(config => 
                 {
                     var key = new SymmetricSecurityKey(
                     Encoding.UTF8.GetBytes(Constants.key));
 
-                    config.TokenValidationParameters = new TokenValidationParameters()
-                    {
-                        ValidIssuer = Constants.Issuer,
-                        ValidateAudience = false,
-                        IssuerSigningKey = key
-                        
+                    config.RequireHttpsMetadata = false;
+                    config.SaveToken = true;
 
+                    config.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = false,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = Constants.Issuer,
+                        IssuerSigningKey = key,
+                        ClockSkew = TimeSpan.Zero
                     };
+                    services.AddCors();
 
                     //config.SaveToken = true;
                 });
@@ -67,17 +82,19 @@ namespace CoTEC_Server
                 x.AddPolicy(Constants.AdminPolicyName, builder =>
                     builder
                         .RequireAuthenticatedUser()
-                        .Requirements.Add(new IdentificationRoleClaim(Constants.AdminRoleName))
+                        .RequireRole(Constants.AdminRoleName)
+                        .Build()
                 );
 
                 x.AddPolicy(Constants.HealthCenterPolicyName, builder =>
                     builder
                         .RequireAuthenticatedUser()
-                        .Requirements.Add(new IdentificationRoleClaim(Constants.HealthCenterRoleName))
+                        .RequireRole(Constants.HealthCenterRoleName)
+                        .Build()
                 );
             });
 
-            services.AddScoped<IAuthorizationHandler, IdentificationRoleClaimHandle>();
+            //services.AddScoped<IAuthorizationHandler, IdentificationRoleClaimHandle>();
 
 
             services
@@ -103,10 +120,7 @@ namespace CoTEC_Server
                 app.UseDeveloperExceptionPage();
             }
 
-            var architectureFolder = (IntPtr.Size == 8) ? "64 bit" : "32 bit";
-            var wkHtmlToPdfPath = System.IO.Path.Combine(env.ContentRootPath, $"wkhtmltox\\v0.12.4\\{architectureFolder}\\libwkhtmltox");
-            CustomAssemblyLoadContext context = new CustomAssemblyLoadContext();
-            context.LoadUnmanagedLibrary(wkHtmlToPdfPath);
+            app.UseAuthentication();
 
             app.UseCors(builder => builder
                 .AllowAnyOrigin()
@@ -117,13 +131,11 @@ namespace CoTEC_Server
 
             app.UseRouting();
 
-            app.UseAuthentication();
-
             app.UseAuthorization();
 
             app.UseWebSockets();
             app.UseGraphQLHttpPost(new HttpPostMiddlewareOptions { Path = "/graphql" });
-            app.UseGraphQLHttpGetSchema(new HttpGetSchemaMiddlewareOptions { Path = "/graphql/schema" });
+            //app.UseGraphQLHttpGetSchema(new HttpGetSchemaMiddlewareOptions { Path = "/graphql/schema" });
             app.UseGraphQL();
             app.UsePlayground();
 
