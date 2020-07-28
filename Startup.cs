@@ -37,6 +37,20 @@ namespace CoTEC_Server
             services.AddControllers();
 
 
+            if (Environment.GetEnvironmentVariable("DigitalOceanDatabaseConn") is null)
+            {
+                services
+              .AddDbContext<CoTEC_DBContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("SQLServerConnection")));
+            }
+            else
+            {
+                services
+              .AddDbContext<CoTEC_DBContext>(options =>
+                options.UseSqlServer(Environment.GetEnvironmentVariable("DigitalOceanDatabaseConn")));
+            }
+
+
 
             if (Environment.GetEnvironmentVariable("DigitalOceanDatabaseConn") is null)
             {
